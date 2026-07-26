@@ -306,6 +306,12 @@
   gap: 1.5rem;
 }
 
+.grid2Col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
 .formRow {
   display: flex;
   gap: 1rem;
@@ -480,6 +486,20 @@
 @media (max-width: 480px) {
   .statsGrid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  color: var(--primary);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

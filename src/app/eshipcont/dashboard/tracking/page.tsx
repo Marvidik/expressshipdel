@@ -9,17 +9,17 @@ const EMPTY_FORM = {
   trackingId: "",
   status: "In Transit",
   isMoving: true,
-  stationaryReason: "",
-  stationaryRequirement: "",
   latestUpdate: "",
   expectedDelivery: "",
   // Receiver
   receiverName: "",
   receiverEmail: "",
+  receiverPhone: "",
   receiverAddress: "",
   // Sender
   senderName: "",
   senderEmail: "",
+  senderPhone: "",
   senderAddress: "",
   // Shipment
   origin: "",
@@ -37,14 +37,78 @@ const EMPTY_FORM = {
   totalWeight: "",
 };
 
-import { Save, Plus, X, Package, MapPin, User, Send, Truck, CheckCircle } from "lucide-react";
+import { Save, Plus, X, Package, MapPin, User, Send, Truck, CheckCircle, Loader2 } from "lucide-react";
+
+import { API_BASE_URL } from "../../../../config";
+import { useSearchParams } from "next/navigation";
 
 export default function TrackingAdminPage() {
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
   const [form, setForm] = useState(EMPTY_FORM);
   const [route, setRoute] = useState<RouteStop[]>([
     { location: "", date: "", status: "Label Created" },
   ]);
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editId) {
+      fetch(`${API_BASE_URL}/public/administrator/admin/shipments/${editId}/`, {
+        headers: { "Authorization": `Token ${localStorage.getItem("eshipcont_token")}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data && data.info) {
+          const contact = data.delivery_contacts?.[0] || {};
+          setForm({
+            trackingId: data.tracking_id || "",
+            status: data.info.status || "In Transit",
+            isMoving: data.info.movement_status === "Moving",
+            latestUpdate: data.info.latest_message || "",
+            expectedDelivery: data.info.expected_delivery_date || "",
+            receiverName: contact.contact_name || "",
+            receiverEmail: contact.contact_email || "",
+            receiverPhone: contact.contact_phone || "",
+            receiverAddress: contact.contact_address || "",
+            senderName: contact.sender_name || "",
+            senderEmail: contact.sender_email || "",
+            senderPhone: contact.sender_phone || "",
+            senderAddress: contact.sender_address || "",
+            origin: data.origin || "",
+            destination: data.destination || "",
+            currentLocation: data.info.current_location || "",
+            package: data.package_type || "Standard",
+            carrier: data.carrier || "",
+            type: data.shipment_type || "Freight",
+            mode: data.shipment_mode || "Flight",
+            referenceNo: data.info.reference || "",
+            product: data.product || "",
+            quantity: data.quantity?.toString() || "1",
+            paymentMode: data.payment_mode || "Cash",
+            totalFreight: data.total_freight || "",
+            totalWeight: data.total_weight || "",
+          });
+          
+          if (data.movement_locations && data.movement_locations.length > 0) {
+            setRoute(data.movement_locations.map((loc: any) => {
+              // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
+              let dateVal = "";
+              if (loc.timestamp) {
+                try {
+                  const d = new Date(loc.timestamp);
+                  dateVal = d.toISOString().slice(0, 16); // "2026-07-26T09:30"
+                } catch { dateVal = loc.timestamp; }
+              }
+              return { location: loc.location, date: dateVal, status: loc.status };
+            }));
+          }
+        }
+      })
+      .catch(err => console.error("Failed to fetch shipment", err));
+    }
+  }, [editId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -58,20 +122,94 @@ export default function TrackingAdminPage() {
   const addStop = () => setRoute(prev => [...prev, { location: "", date: "", status: "In Transit" }]);
   const removeStop = (idx: number) => setRoute(prev => prev.filter((_, i) => i !== idx));
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production: POST to API
-    console.log("Saving shipment:", { form, route });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    
+    // Construct payload
+    const payload: any = {
+      ...(form.trackingId ? { tracking_id: form.trackingId } : {}),
+      origin: form.origin,
+      destination: form.destination,
+      carrier: form.carrier,
+      package_type: form.package,
+      shipment_type: form.type,
+      shipment_mode: form.mode,
+      product: form.product,
+      quantity: parseInt(form.quantity),
+      payment_mode: form.paymentMode,
+      total_freight: form.totalFreight,
+      total_weight: form.totalWeight,
+      info: {
+        status: form.status,
+        latest_message: form.latestUpdate,
+        movement_status: form.isMoving ? "Moving" : "Stationary",
+        current_location: form.currentLocation,
+        expected_delivery_date: form.expectedDelivery,
+        reference: form.referenceNo || "-"
+      },
+      delivery_contacts: [{
+        contact_name: form.receiverName || "-",
+        contact_email: form.receiverEmail || "-",
+        contact_phone: form.receiverPhone || "-",
+        contact_address: form.receiverAddress || "-",
+        sender_name: form.senderName || "-",
+        sender_email: form.senderEmail || "-",
+        sender_phone: form.senderPhone || "-",
+        sender_address: form.senderAddress || "-"
+      }],
+
+      movement_locations: route.map(r => ({
+        location: r.location,
+        timestamp: r.date, // Needs ISO if API expects it
+        status: r.status
+      }))
+    };
+
+    const url = editId 
+      ? `${API_BASE_URL}/public/administrator/admin/shipments/${editId}/` 
+      : `${API_BASE_URL}/public/administrator/admin/shipments/`;
+      
+    const method = editId ? "PATCH" : "POST";
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Token ${localStorage.getItem("eshipcont_token")}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        const text = await res.text();
+        try {
+          const errObj = JSON.parse(text);
+          setSaveError(JSON.stringify(errObj, null, 2));
+        } catch {
+          setSaveError(text || "Failed to save shipment.");
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSaveError(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <form onSubmit={handleSave}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Tracking Manager</h1>
-        <button type="submit" className={styles.actionBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {saved ? <CheckCircle size={18} /> : <Save size={18} />} {saved ? "Saved!" : "Save Shipment"}
+        <button type="submit" disabled={isSaving} className={styles.actionBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSaving ? 0.7 : 1 }}>
+          {isSaving ? <Loader2 size={18} className={styles.spin} /> : saved ? <CheckCircle size={18} /> : <Save size={18} />} 
+          {isSaving ? "Saving..." : saved ? "Saved!" : "Save Shipment"}
         </button>
       </div>
 
@@ -81,15 +219,22 @@ export default function TrackingAdminPage() {
         <div className={styles.formGrid}>
           <div className={styles.inputGroup}>
             <label>Tracking ID</label>
-            <input name="trackingId" value={form.trackingId} onChange={handleChange} placeholder="e.g. 30737BY3" required />
+            <input 
+              name="trackingId" 
+              value={form.trackingId} 
+              readOnly 
+              disabled 
+              placeholder="Auto-generated by system" 
+              style={{ backgroundColor: "#f0f2f5", color: "#888", cursor: "not-allowed" }}
+            />
           </div>
           <div className={styles.inputGroup}>
             <label>Reference Number</label>
             <input name="referenceNo" value={form.referenceNo} onChange={handleChange} placeholder="Internal reference" />
           </div>
           <div className={styles.inputGroup}>
-            <label>Expected Delivery</label>
-            <input type="text" name="expectedDelivery" value={form.expectedDelivery} onChange={handleChange} placeholder="25 October 2025 at 8:30 am" />
+            <label>Expected Delivery Date</label>
+            <input type="date" name="expectedDelivery" value={form.expectedDelivery} onChange={handleChange} />
           </div>
           <div className={styles.inputGroup}>
             <label>Overall Status</label>
@@ -129,18 +274,6 @@ export default function TrackingAdminPage() {
             </select>
           </div>
         </div>
-        {!form.isMoving && (
-          <div className={styles.formGrid} style={{ marginTop: "1rem" }}>
-            <div className={styles.inputGroup}>
-              <label>Reason for Delay / Stoppage</label>
-              <textarea name="stationaryReason" value={form.stationaryReason} onChange={handleChange} placeholder="e.g. Package held at customs for documentation review." rows={3} />
-            </div>
-            <div className={styles.inputGroup}>
-              <label>What is Required to Move It</label>
-              <textarea name="stationaryRequirement" value={form.stationaryRequirement} onChange={handleChange} placeholder="e.g. Receiver must provide import permit within 5 business days." rows={3} />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Route Timeline */}
@@ -157,7 +290,7 @@ export default function TrackingAdminPage() {
             </div>
             <div style={{ flex: 1 }} className={styles.inputGroup}>
               <label>Date & Time</label>
-              <input value={stop.date} onChange={e => handleRouteChange(idx, "date", e.target.value)} placeholder="e.g. September 28, 2025 | 2:00 PM" />
+              <input type="datetime-local" value={stop.date} onChange={e => handleRouteChange(idx, "date", e.target.value)} />
             </div>
             <div style={{ flex: 1 }} className={styles.inputGroup}>
               <label>Status at this stop</label>
@@ -184,7 +317,7 @@ export default function TrackingAdminPage() {
       </div>
 
       {/* Receiver & Sender */}
-      <div className={styles.grid2Col} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+      <div className={styles.grid2Col}>
         <div className={styles.formSection}>
           <h3><User size={20} className={styles.pIcon} /> Receiver Information</h3>
           <div className={styles.inputGroup}>
@@ -194,6 +327,10 @@ export default function TrackingAdminPage() {
           <div className={styles.inputGroup}>
             <label>Email</label>
             <input name="receiverEmail" value={form.receiverEmail} onChange={handleChange} placeholder="receiver@email.com" />
+          </div>
+          <div className={styles.inputGroup}>
+            <label>Phone Number</label>
+            <input name="receiverPhone" value={form.receiverPhone} onChange={handleChange} placeholder="+1 234 567 8900" />
           </div>
           <div className={styles.inputGroup}>
             <label>Shipping Address</label>
@@ -209,6 +346,10 @@ export default function TrackingAdminPage() {
           <div className={styles.inputGroup}>
             <label>Email</label>
             <input name="senderEmail" value={form.senderEmail} onChange={handleChange} placeholder="sender@email.com" />
+          </div>
+          <div className={styles.inputGroup}>
+            <label>Phone Number</label>
+            <input name="senderPhone" value={form.senderPhone} onChange={handleChange} placeholder="+1 234 567 8900" />
           </div>
           <div className={styles.inputGroup}>
             <label>Address</label>
@@ -286,10 +427,35 @@ export default function TrackingAdminPage() {
           </div>
         </div>
       </div>
+      {saveError && (
+        <div style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          zIndex: 9999,
+          backgroundColor: "#ffebee",
+          color: "#d32f2f",
+          padding: "1rem 1.5rem",
+          borderRadius: "8px",
+          border: "1px solid #ffcdd2",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          maxWidth: "400px"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <strong>Error Saving Shipment</strong>
+            <button type="button" onClick={() => setSaveError(null)} style={{ background: "none", border: "none", color: "#d32f2f", cursor: "pointer", padding: "0", marginLeft: "1rem" }}>
+              <X size={16} />
+            </button>
+          </div>
+          <pre style={{ margin: "0", whiteSpace: "pre-wrap", fontSize: "0.85rem", fontFamily: "inherit", maxHeight: "200px", overflowY: "auto" }}>
+            {saveError}
+          </pre>
+        </div>
+      )}
 
-      <button type="submit" className={styles.saveBtn}>
-        {saved ? <CheckCircle size={20} /> : <Save size={20} />} 
-        {saved ? "Shipment Saved Successfully!" : "Save Shipment Data"}
+      <button type="submit" disabled={isSaving} className={styles.saveBtn} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", opacity: isSaving ? 0.7 : 1 }}>
+        {isSaving ? <Loader2 size={20} className={styles.spin} /> : saved ? <CheckCircle size={20} /> : <Save size={20} />} 
+        {isSaving ? "Saving Shipment Data..." : saved ? "Shipment Saved Successfully!" : "Save Shipment Data"}
       </button>
     </form>
   );

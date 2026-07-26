@@ -11,12 +11,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const auth = localStorage.getItem("eshipcont_auth");
-      if (!auth) router.push("/eshipcont");
+      if (!auth) {
+        router.push("/eshipcont");
+      } else {
+        setIsAuthenticated(true);
+      }
     }
   }, [router]);
+
+  if (!isAuthenticated) {
+    return <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#f4f7fe" }}>Loading...</div>;
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("eshipcont_auth");
@@ -25,7 +35,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} />, href: "/eshipcont/dashboard" },
-    { id: "shipments", label: "Shipments", icon: <Package size={20} />, href: "/eshipcont/dashboard/shipments" },
   ];
 
   return (

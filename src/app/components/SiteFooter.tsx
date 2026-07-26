@@ -34,10 +34,9 @@ export default function SiteFooter() {
         </div>
         <div className={styles.footerRight}>
           <div className={styles.footerContact}>
-            <span>+234 819 815 7158</span> | <span>hello@expressshipdel.com</span>
+            <span>contact@expressshipdel.com</span>
           </div>
-          <p><strong>Nigeria</strong></p>
-          <p>Office 9796<br />182 Nwaiba road<br />Uyo<br />Akwa Ibom State<br />E6 2JA</p>
+          <p><strong>Canada</strong></p>
         </div>
       </div>
       <div className={styles.footerBottom}>

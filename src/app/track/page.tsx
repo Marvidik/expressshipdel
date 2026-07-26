@@ -2,50 +2,30 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./track.module.css";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import SiteFooter from "../components/SiteFooter";
 import Navbar from "../components/Navbar";
+import { API_BASE_URL } from "../../config";
 
 const RealMap = dynamic(() => import("../components/RealMap"), { ssr: false });
 
 interface ShipmentData {
   trackingId: string;
   status: string;
+  isMoving: boolean;
+  currentLocation: string;
+  origin: string;
+  destination: string;
   latestUpdate: string;
   expectedDelivery: string;
-  receiver: { name: string; email: string; address: string; };
-  sender: { name: string; email: string; address: string; };
+  receiver: { name: string; phone: string; email: string; address: string; };
+  sender: { name: string; phone: string; email: string; address: string; };
   shipment: {
     origin: string; destination: string; package: string; carrier: string;
     type: string; mode: string; referenceNo: string; product: string;
     quantity: number; paymentMode: string; totalFreight: string; totalWeight: string;
   };
   timeline: Array<{ status: string; location: string; date: string; done: boolean; active: boolean; }>;
-}
-
-function getMockShipment(id: string): ShipmentData {
-  return {
-    trackingId: id,
-    status: "Out For Delivery",
-    latestUpdate: "Package is out for delivery, waiting for confirmations before being delivered at customer address.",
-    expectedDelivery: "25 October 2025 at 8:30 am",
-    receiver: { name: "Chayna Eller", email: "chaynamoody@gmail.com", address: "813 W Robertson Blvd Chowchilla, California 93610" },
-    sender: { name: "John Osei", email: "john.osei@damascocorp.sy", address: "15 Al Qaimariyya St, Damascus, Syria" },
-    shipment: {
-      origin: "Damascus, Syria", destination: "United States", package: "Special",
-      carrier: "CargoNest Logistics", type: "Freight", mode: "Flight",
-      referenceNo: "30737BY3", product: "Parcel", quantity: 1,
-      paymentMode: "Cash", totalFreight: "$--", totalWeight: "2,220 kg",
-    },
-    timeline: [
-      { status: "Label Created", location: "Damascus, Syria", date: "August 20, 2025 | 4:50 AM", done: true, active: false },
-      { status: "Picked Up", location: "Damascus, Syria", date: "August 20, 2025 | 9:51 AM", done: true, active: false },
-      { status: "In Transit", location: "Istanbul, Turkey", date: "September 28, 2025 | 2:00 PM", done: true, active: false },
-      { status: "Out For Delivery", location: "Québec, Canada", date: "October 25, 2025 | 9:00 AM", done: false, active: true },
-      { status: "Delivered", location: "", date: "", done: false, active: false },
-    ],
-  };
 }
 
 function Barcode({ value }: { value: string }) {
@@ -62,8 +42,6 @@ function Barcode({ value }: { value: string }) {
   );
 }
 
-
-
 export default function TrackPage() {
   const [trackingId, setTrackingId] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,7 +49,6 @@ export default function TrackPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Check for ID in URL
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get("id");
     if (id) {
@@ -80,29 +57,99 @@ export default function TrackPage() {
     }
   }, []);
 
-  const triggerSearch = (id: string) => {
+  const triggerSearch = async (id: string) => {
     setError("");
     setIsProcessing(true);
-    setTimeout(() => {
+    setShipment(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/public/track/${id.trim()}/`);
+      if (res.status === 404 || !res.ok) {
+        const data = await res.json();
+        setError(data?.detail || "No Shipment matches the given query.");
+      } else {
+        const data = await res.json();
+        const contact = data.delivery_contacts?.[0] || {};
+        const movementLocations = data.movement_locations || [];
+        const currentLoc = (data.info.current_location || "").toLowerCase().trim();
+
+        // Find the index of the active (current) stop by matching current_location
+        let currentIdx = movementLocations.findIndex(
+          (loc: any) => loc.location.toLowerCase().trim() === currentLoc
+        );
+        // If not found by name, default to last stop
+        if (currentIdx === -1) currentIdx = movementLocations.length - 1;
+
+        // Build timeline:
+        // idx < currentIdx  → done (✓)
+        // idx === currentIdx → active (pulse, no ✓)
+        // idx > currentIdx  → pending (no mark)
+        const timeline = movementLocations.map((loc: any, idx: number) => ({
+          status: loc.status,
+          location: loc.location,
+          date: new Date(loc.timestamp).toLocaleString(),
+          done: idx < currentIdx,
+          active: idx === currentIdx,
+        }));
+
+        const mapped: ShipmentData = {
+          trackingId: data.tracking_id,
+          status: data.info.status,
+          isMoving: data.info.movement_status === "Moving",
+          currentLocation: data.info.current_location || "",
+          origin: data.origin || "",
+          destination: data.destination || "",
+          latestUpdate: data.info.latest_message || "No updates available.",
+          expectedDelivery: data.info.expected_delivery_date || "-",
+          receiver: {
+            name: contact.contact_name || "-",
+            phone: contact.contact_phone || "-",
+            email: contact.contact_email || "-",
+            address: contact.contact_address || "-",
+          },
+          sender: {
+            name: contact.sender_name || "-",
+            phone: contact.sender_phone || "-",
+            email: contact.sender_email || "-",
+            address: contact.sender_address || "-",
+          },
+          shipment: {
+            origin: data.origin || "-",
+            destination: data.destination || "-",
+            package: data.package_type || "-",
+            carrier: data.carrier || "-",
+            type: data.shipment_type || "-",
+            mode: data.shipment_mode || "-",
+            referenceNo: data.info.reference || "-",
+            product: data.product || "-",
+            quantity: data.quantity || 1,
+            paymentMode: data.payment_mode || "-",
+            totalFreight: data.total_freight || "-",
+            totalWeight: data.total_weight || "-",
+          },
+          timeline,
+        };
+        setShipment(mapped);
+      }
+    } catch {
+      setError("An error occurred while tracking the shipment.");
+    } finally {
       setIsProcessing(false);
-      setShipment(getMockShipment(id.trim()));
-    }, 1500);
+    }
   };
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
     if (!trackingId.trim()) { setError("Please enter a tracking number."); return; }
-
-    // Update URL without reload
     const url = new URL(window.location.href);
     url.searchParams.set("id", trackingId.trim());
     window.history.pushState({}, "", url);
-
     triggerSearch(trackingId.trim());
   };
 
   const activeIndex = shipment?.timeline.findIndex((t) => t.active) ?? -1;
-  const progressPercent = shipment ? ((activeIndex) / (shipment.timeline.length - 1)) * 100 : 0;
+  const progressPercent = shipment
+    ? ((activeIndex < 0 ? shipment.timeline.length - 1 : activeIndex) / Math.max(shipment.timeline.length - 1, 1)) * 100
+    : 0;
 
   return (
     <div className={styles.container}>
@@ -122,9 +169,9 @@ export default function TrackPage() {
           <form onSubmit={handleTrack} className={styles.searchForm}>
             <input
               type="text"
-              placeholder="Enter order / tracking number (e.g. 30737BY3)"
+              placeholder="Enter order / tracking number (e.g. EXSD-000001)"
               value={trackingId}
-              onChange={(e) => { setTrackingId(e.target.value); setShipment(null); }}
+              onChange={(e) => { setTrackingId(e.target.value); setShipment(null); setError(""); }}
               className={styles.searchInput}
             />
             <button type="submit" className={styles.trackBtn} disabled={isProcessing}>
@@ -134,7 +181,7 @@ export default function TrackPage() {
           {error && <p className={styles.errorMsg}>{error}</p>}
         </div>
 
-        {!shipment && !isProcessing && (
+        {!shipment && !isProcessing && !error && (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📦</div>
             <h3>Enter your tracking number above</h3>
@@ -151,9 +198,12 @@ export default function TrackPage() {
 
         {shipment && (
           <div className={styles.resultWrapper}>
+            {/* Status Banner */}
             <div className={styles.statusBanner}>
               <div className={styles.statusLeft}>
-                <span className={styles.statusPill}>{shipment.status}</span>
+                <span className={`${styles.statusPill} ${shipment.isMoving ? styles.statusPillMoving : styles.statusPillStationary}`}>
+                  {shipment.isMoving ? "🚛 " : "⏸ "}{shipment.status}
+                </span>
                 <div>
                   <p className={styles.statusLabel}>Latest Update</p>
                   <p className={styles.statusMsg}>{shipment.latestUpdate}</p>
@@ -162,14 +212,28 @@ export default function TrackPage() {
               <div className={styles.statusRight}>
                 <p className={styles.statusLabel}>Expected Delivery</p>
                 <p className={styles.statusDate}>{shipment.expectedDelivery}</p>
+                {shipment.currentLocation && (
+                  <>
+                    <p className={styles.statusLabel} style={{ marginTop: "1rem" }}>Current Location</p>
+                    <p className={styles.statusDate} style={{ fontSize: "1rem" }}>{shipment.currentLocation}</p>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Map Tracker */}
             <div className={styles.infoCard + " " + styles.mapCard}>
-              <RealMap />
+              <RealMap
+                origin={shipment.origin}
+                destination={shipment.destination}
+                timeline={shipment.timeline.map(t => ({ location: t.location, status: t.status, active: t.active, done: t.done }))}
+                currentLocation={shipment.currentLocation}
+                isMoving={shipment.isMoving}
+              />
+
             </div>
 
+            {/* Progress Bar */}
             <div className={styles.progressSection}>
               <div className={styles.progressBar}>
                 <div className={styles.progressFill} style={{ width: `${progressPercent}%` }}></div>
@@ -177,11 +241,13 @@ export default function TrackPage() {
                   <div
                     key={i}
                     className={`${styles.progressNode} ${step.done || step.active ? styles.progressNodeDone : ""} ${step.active ? styles.progressNodeActive : ""}`}
-                    style={{ left: `${(i / (shipment.timeline.length - 1)) * 100}%` }}
+                    style={{ left: `${(i / Math.max(shipment.timeline.length - 1, 1)) * 100}%` }}
                   >
                     <div className={styles.progressDot}>
                       {step.done && <span>✓</span>}
-                      {step.active && <span className={styles.activePulse}></span>}
+                      {step.active && (
+                        <span className={shipment.isMoving ? styles.activePulse : styles.activePulseStatic}></span>
+                      )}
                     </div>
                     <div className={styles.progressLabel}>
                       <strong>{step.status}</strong>
@@ -193,16 +259,23 @@ export default function TrackPage() {
               </div>
             </div>
 
+            {/* Timeline + Receiver/Sender */}
             <div className={styles.infoGrid}>
               <div className={styles.timelineCard}>
                 <h3 className={styles.cardTitle}>Shipment Timeline</h3>
+                {/* Movement status badge */}
+                <div className={`${styles.movementBadge} ${shipment.isMoving ? styles.movementBadgeMoving : styles.movementBadgeStationary}`}>
+                  {shipment.isMoving ? "🚛 Package is moving" : "⏸ Package is stationary"}
+                </div>
                 <div className={styles.timeline}>
                   {shipment.timeline.map((step, i) => (
                     <div key={i} className={`${styles.tStep} ${step.active ? styles.tStepActive : ""} ${step.done ? styles.tStepDone : ""}`}>
                       <div className={styles.tDotWrap}>
                         <div className={styles.tDot}>
                           {step.done && <span>✓</span>}
-                          {step.active && <span className={styles.activePulseSmall}></span>}
+                          {step.active && (
+                            <span className={shipment.isMoving ? styles.activePulseSmall : styles.activePulseSmallStatic}></span>
+                          )}
                         </div>
                         {i < shipment.timeline.length - 1 && <div className={styles.tLine}></div>}
                       </div>
@@ -220,18 +293,21 @@ export default function TrackPage() {
                 <div className={styles.infoCard}>
                   <h3 className={styles.cardTitle}>Receiver Information</h3>
                   <div className={styles.infoRow}><span>Name</span><strong>{shipment.receiver.name}</strong></div>
+                  <div className={styles.infoRow}><span>Phone</span><strong>{shipment.receiver.phone}</strong></div>
                   <div className={styles.infoRow}><span>Email</span><strong>{shipment.receiver.email}</strong></div>
                   <div className={styles.infoRow}><span>Shipping Address</span><strong>{shipment.receiver.address}</strong></div>
                 </div>
                 <div className={styles.infoCard}>
                   <h3 className={styles.cardTitle}>Sender Information</h3>
                   <div className={styles.infoRow}><span>Name</span><strong>{shipment.sender.name}</strong></div>
+                  <div className={styles.infoRow}><span>Phone</span><strong>{shipment.sender.phone}</strong></div>
                   <div className={styles.infoRow}><span>Email</span><strong>{shipment.sender.email}</strong></div>
                   <div className={styles.infoRow}><span>Address</span><strong>{shipment.sender.address}</strong></div>
                 </div>
               </div>
             </div>
 
+            {/* Shipment Info */}
             <div className={styles.infoCard}>
               <h3 className={styles.cardTitle}>Shipment Information</h3>
               <div className={styles.shipGrid}>

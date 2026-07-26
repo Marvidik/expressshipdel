@@ -40,7 +40,7 @@ export default function ContactPage() {
               </div>
               <div className={styles.formGroup}>
                 <label>Phone Number</label>
-                <input type="tel" placeholder="+234 000 000 0000" className={styles.input} />
+                <input type="tel" placeholder="Your Phone Number" className={styles.input} />
               </div>
               <div className={styles.formGroup}>
                 <label>Subject</label>
@@ -57,22 +57,14 @@ export default function ContactPage() {
           {/* Info */}
           <div className={styles.infoCol}>
             <div className={styles.infoCard}>
-              <div className={styles.infoIcon}>📞</div>
-              <h4>Call Us</h4>
-              <p>+234 819 815 7158</p>
-              <p>Mon – Sun, 24 Hours</p>
-            </div>
-            <div className={styles.infoCard}>
               <div className={styles.infoIcon}>✉️</div>
               <h4>Email Us</h4>
-              <p>hello@expressshipdel.com</p>
-              <p>support@expressshipdel.com</p>
+              <p>contact@expressshipdel.com</p>
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoIcon}>📍</div>
               <h4>Visit Us</h4>
-              <p>Office 9796, 182 Nwaiba road</p>
-              <p>Uyo, Akwa Ibom State, Nigeria</p>
+              <p>Canada</p>
             </div>
           </div>
         </div>

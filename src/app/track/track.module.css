@@ -334,6 +334,15 @@
   height: 8px;
   border-radius: 50%;
   background: var(--white);
+  animation: dotBounce 0.8s ease-in-out infinite alternate;
+}
+
+.activePulseStatic {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--white);
 }
 
 .activePulseSmall {
@@ -342,6 +351,57 @@
   height: 6px;
   border-radius: 50%;
   background: var(--white);
+  animation: dotBounce 0.8s ease-in-out infinite alternate;
+}
+
+.activePulseSmallStatic {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white);
+}
+
+@keyframes dotBounce {
+  from { transform: scale(1); opacity: 1; }
+  to   { transform: scale(1.5); opacity: 0.6; }
+}
+
+.statusPillMoving {
+  background: var(--primary);
+  animation: pillPulse 2s ease infinite;
+}
+
+.statusPillStationary {
+  background: #8f9bba;
+}
+
+@keyframes pillPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,90,54,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(255,90,54,0); }
+}
+
+/* Movement badge in timeline */
+.movementBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.movementBadgeMoving {
+  background: rgba(255, 90, 54, 0.1);
+  color: var(--primary);
+  animation: badgePulse 2s ease infinite;
+}
+
+.movementBadgeStationary {
+  background: rgba(143, 155, 186, 0.15);
+  color: #8f9bba;
 }
 
 .progressLabel {
@@ -580,6 +640,9 @@
 @media (max-width: 768px) {
   .navLinks {
     display: none;
+  }
+  .searchContainer {
+    margin: -2.5rem 1rem 3rem;
   }
   .searchForm {
     flex-direction: column;

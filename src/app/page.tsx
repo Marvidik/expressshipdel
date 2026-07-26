@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import SiteFooter from "./components/SiteFooter";
 import Navbar from "./components/Navbar";
+import { Truck, Coins, FastForward, Package, PackageOpen, Box } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -280,6 +281,53 @@ export default function Home() {
 
         <button className={styles.testiBtn}>Get started</button>
       </section>
+
+      {/* Commitment Section */}
+      <section className={styles.commitSection}>
+        <div className={styles.commitHeader}>
+          <h2 className={styles.commitTitle}>Our Commitment to Seamless Logistics</h2>
+          <p className={styles.commitSubtitle}>Delivering efficiency, security, and reliability—tailored to your needs.</p>
+        </div>
+        
+        <div className={styles.commitGrid}>
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><Truck size={32} /></div>
+            <h3>Express Last-Mile Delivery</h3>
+            <p>Distance is never a challenge. We pick up directly from your location and ensure safe, timely delivery anywhere you need. From urgent documents to large shipments, our dedicated fleet is ready for same-day deliveries.</p>
+          </div>
+          
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><Coins size={32} /></div>
+            <h3>CargoNest Partner Program</h3>
+            <p>Join our network and turn your vehicle into a steady source of income. Whether you have a bike, van, or truck, CargoNest connects you with delivery requests while ensuring fair earnings.</p>
+          </div>
+          
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><FastForward size={32} /></div>
+            <h3>Priority Freight Services</h3>
+            <p>Need your shipment to arrive on time, every time? Our priority shipping ensures your package is handled with urgency and care, making timely delivery a guarantee, not a possibility.</p>
+          </div>
+          
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><Package size={32} /></div>
+            <h3>Secure Storage Solutions</h3>
+            <p>Whether you need short-term warehousing or long-term storage, CargoNest offers secure, climate-controlled facilities to keep your goods safe until they're ready for transport.</p>
+          </div>
+          
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><PackageOpen size={32} /></div>
+            <h3>E-Commerce Fulfillment</h3>
+            <p>Sell online? We handle inventory storage, order processing, and nationwide delivery—so you can focus on growing your business while we take care of logistics.</p>
+          </div>
+          
+          <div className={styles.commitCard}>
+            <div className={styles.commitIcon}><Box size={32} /></div>
+            <h3>Specialized Cargo Handling</h3>
+            <p>From medical equipment to high-tech devices, we specialize in handling delicate and valuable shipments with precision and care, ensuring they arrive in perfect condition.</p>
+          </div>
+        </div>
+      </section>
+
 
       {/* FAQ Section */}
       <section className={styles.faqSection}>

@@ -595,6 +595,7 @@
     mask-image: none;
     -webkit-mask-image: none;
     background: rgba(8, 3, 26, 0.7);
+    backdrop-filter: none;
   }
 
   .aboutSection {
@@ -603,6 +604,12 @@
 
   .aboutImageWrapper {
     width: 100%;
+  }
+
+  .experienceBadge {
+    right: 0;
+    bottom: 0;
+    border-radius: 8px 0 8px 0;
   }
 
   .whyContent {
@@ -636,6 +643,10 @@
     font-size: 2.8rem;
   }
 
+  .heroBottomShape {
+    height: 60px;
+  }
+
   .trackForm {
     flex-direction: column;
   }
@@ -645,7 +656,15 @@
   }
 
   .heroStats {
-    gap: 1.5rem;
+    display: none;
+  }
+
+  .experienceBadge {
+    padding: 1rem;
+  }
+
+  .experienceBadge h2 {
+    font-size: 2.5rem;
   }
 }
 
@@ -753,6 +772,88 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
+}
+
+/* Commitment Section */
+.commitSection {
+  padding: 6rem 5%;
+  background-color: #f9f9fc;
+}
+
+.commitHeader {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.commitTitle {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+.commitSubtitle {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.commitGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.commitCard {
+  background: white;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.commitCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.commitIcon {
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.commitCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.commitCard p {
+  color: #666;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .commitGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .commitGrid {
+    grid-template-columns: 1fr;
+  }
+  .commitTitle {
+    font-size: 1.8rem;
+  }
 }
 
 .faqSection {
