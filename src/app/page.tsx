@@ -139,23 +139,23 @@ export default function Home() {
           <div className={styles.servicesGrid}>
             <ServiceCard
               icon={<ShipIcon />}
-              title="Skateboard Services"
-              desc="Following the quality of our service thus having gained trust of our many clients."
+              title="Ship & Delivery"
+              desc="Fast, secure dispatch for parcels, documents, and urgent cargo across cities and borders."
             />
             <ServiceCard
               icon={<WarehouseIcon />}
-              title="Motor bike Services"
-              desc="Following the quality of our service thus having gained trust of our many clients."
+              title="Warehousing & Storage"
+              desc="Safe short-term and long-term storage solutions for goods that need to stay protected."
             />
             <ServiceCard
               icon={<AirplaneIcon />}
-              title="Bicycle Services"
-              desc="Following the quality of our service thus having gained trust of our many clients."
+              title="Air Freight"
+              desc="Priority air cargo handling for time-sensitive shipments that must arrive quickly."
             />
             <ServiceCard
               icon={<TruckIcon />}
-              title="Local Delivery Services"
-              desc="Following the quality of our service thus having gained trust of our many clients."
+              title="Local Distribution"
+              desc="Reliable same-day and scheduled deliveries for homes, businesses, and retail outlets."
             />
           </div>
         </div>
@@ -270,22 +270,22 @@ export default function Home() {
           <div className={`${styles.testiCard} ${styles.testiCardDark}`}>
             <div className={styles.testiHeader}>
               <div className={styles.testiUser}>
-                <img src="/man1.jpg" alt="User" className={styles.testiPic} />
+                <img src="/profile3.jpg" alt="User" className={styles.testiPic} />
                 <div>
-                  <p className={styles.testiName}>John Martin</p>
-                  <p className={styles.testiRole}>Restoration Company</p>
+                  <p className={styles.testiName}>Amina Yusuf</p>
+                  <p className={styles.testiRole}>Retail Business Owner</p>
                 </div>
               </div>
               <div className={styles.quoteIcon}>"</div>
             </div>
-            <p className={styles.testiText}>Leverage agile frameworks to provide a robust synopsis for strategy foster collaborative thinking to further the overall value proposition. Organically grow the holistic world view of disruptive innovation via workplace diversity and empowerment.</p>
+            <p className={styles.testiText}>The process was smooth from pickup to delivery, and our customers noticed the difference. It has made our operations feel much more reliable.</p>
             <div className={styles.stars}>★★★★★</div>
           </div>
 
           <div className={`${styles.testiCard} ${styles.testiCardLight}`}>
             <div className={styles.testiHeader}>
               <div className={styles.testiUser}>
-                <img src="/man4.jpg" alt="User" className={styles.testiPic} />
+                <img src="/profile1.jpg" alt="User" className={styles.testiPic} />
                 <div>
                   <p className={styles.testiName}>Kathleen Smith</p>
                   <p className={styles.testiRole}>Fuel Company</p>
@@ -293,14 +293,14 @@ export default function Home() {
               </div>
               <div className={styles.quoteIcon}>"</div>
             </div>
-            <p className={styles.testiText}>Leverage agile frameworks to provide a robust synopsis for strategy foster collaborative thinking to further the overall value proposition. Organically grow the holistic world view of disruptive innovation via workplace diversity and empowerment.</p>
+            <p className={styles.testiText}>We needed a dependable logistics partner for recurring deliveries, and they delivered every time. Their tracking made planning much easier.</p>
             <div className={styles.stars}>★★★★★</div>
           </div>
 
           <div className={`${styles.testiCard} ${styles.testiCardDark}`}>
             <div className={styles.testiHeader}>
               <div className={styles.testiUser}>
-                <img src="/man5.jpg" alt="User" className={styles.testiPic} />
+                <img src="/profile2.jpg" alt="User" className={styles.testiPic} />
                 <div>
                   <p className={styles.testiName}>John Martin</p>
                   <p className={styles.testiRole}>Restoration Company</p>
@@ -308,7 +308,7 @@ export default function Home() {
               </div>
               <div className={styles.quoteIcon}>"</div>
             </div>
-            <p className={styles.testiText}>Leverage agile frameworks to provide a robust synopsis for strategy foster collaborative thinking to further the overall value proposition. Organically grow the holistic world view of disruptive innovation via workplace diversity and empowerment.</p>
+            <p className={styles.testiText}>Their innovative approach to logistics management has helped us reduce delivery times by 40%. Highly recommended for any business looking to streamline operations.</p>
             <div className={styles.stars}>★★★★★</div>
           </div>
         </div>

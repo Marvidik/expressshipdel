@@ -393,19 +393,18 @@
 }
 
 .whyContent {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1.2fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
   gap: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .whySide {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4rem;
+  gap: 3rem;
 }
 
 .whySideLeft .whyItem {
@@ -464,9 +463,9 @@
 }
 
 .whyCenter {
-  flex: 1.5;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .whyImage {
@@ -613,14 +612,27 @@
   }
 
   .whyContent {
-    flex-direction: column;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .whyCenter {
+    grid-column: 1 / -1;
   }
 
   .whySideLeft .whyItem,
   .whySideRight .whyItem {
-    text-align: center;
-    flex-direction: column;
-    align-items: center;
+    text-align: left;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .whySideLeft {
+    align-items: flex-end;
+  }
+
+  .whySideRight {
+    align-items: flex-start;
   }
 
   .servicesInner {
@@ -641,6 +653,35 @@
 
   .heroTitle {
     font-size: 2.8rem;
+  }
+
+  .whyContent {
+    grid-template-columns: 1fr;
+  }
+
+  .whyCenter {
+    grid-column: auto;
+    margin-bottom: 0.5rem;
+  }
+
+  .whySide {
+    gap: 1.5rem;
+  }
+
+  .whySideLeft .whyItem,
+  .whySideRight .whyItem {
+    text-align: left;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .whyIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .whyText h4 {
+    font-size: 1rem;
   }
 
   .heroBottomShape {
@@ -807,7 +848,7 @@
   background: white;
   padding: 2.5rem 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border: 1px solid #eee;
@@ -815,7 +856,7 @@
 
 .commitCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .commitIcon {
@@ -851,6 +892,7 @@
   .commitGrid {
     grid-template-columns: 1fr;
   }
+
   .commitTitle {
     font-size: 1.8rem;
   }
