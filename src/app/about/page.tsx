@@ -14,7 +14,7 @@ export default function AboutPage() {
         <img src="/cargo2.jpg" alt="About us" className={styles.heroBg} />
         <div className={styles.heroContent}>
           <p className={styles.heroSub}>OUR STORY</p>
-          <h1>About <span>ExpressShipDel</span></h1>
+          <h1>About <span>ExpressShipDelivery</span></h1>
           <p>Delivering trust and speed across the globe for over 23 years.</p>
         </div>
       </section>
@@ -24,7 +24,7 @@ export default function AboutPage() {
         <div className={styles.missionLeft}>
           <div className={styles.sectionBadge}>WHO WE ARE</div>
           <h2>A Logistics Company<br /><span>Built on Trust</span></h2>
-          <p>ExpressShipDel is a leading global logistics and express delivery company dedicated to providing seamless, fast, and secure transportation solutions. With state-of-the-art tracking systems and a robust international network, we guarantee the safety of your packages from dispatch to delivery.</p>
+          <p>ExpressShipDelivery is a leading global logistics and express delivery company dedicated to providing seamless, fast, and secure transportation solutions. With state-of-the-art tracking systems and a robust international network, we guarantee the safety of your packages from dispatch to delivery.</p>
           <p>Since our founding in 2001, we have grown from a small local courier service into a trusted name in international freight and logistics, serving over 12,000 clients across 80+ countries.</p>
           <div className={styles.statsRow}>
             <div className={styles.stat}><h3>23+</h3><p>Years Experience</p></div>

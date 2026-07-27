@@ -6,7 +6,7 @@ export default function SiteFooter() {
     <footer className={styles.footer}>
       <div className={styles.footerTop}>
         <div className={styles.footerLogo}>
-          <img src="/shiplogo.png" alt="ExpressShipDel" style={{ height: '40px', objectFit: 'contain' }} />
+          <img src="/shiplogo.png" alt="ExpressShipDelivery" style={{ height: '40px', objectFit: 'contain' }} />
         </div>
       </div>
       <div className={styles.footerGrid}>
@@ -34,13 +34,13 @@ export default function SiteFooter() {
         </div>
         <div className={styles.footerRight}>
           <div className={styles.footerContact}>
-            <span>contact@expressshipdel.com</span>
+            <span>contact@expreshipdeliv.com </span>
           </div>
           <p><strong>Canada</strong></p>
         </div>
       </div>
       <div className={styles.footerBottom}>
-        <p>English (United Kingdom) ⌄ &nbsp;&nbsp;&nbsp; © ExpressShipDel, LLC.</p>
+        <p>English (United Kingdom) ⌄ &nbsp;&nbsp;&nbsp; © ExpressShipDelivery, LLC.</p>
         <div className={styles.footerSocials}>
           <a href="#">in</a>
           <a href="#">f</a>

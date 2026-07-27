@@ -2,15 +2,49 @@
 
 import styles from "./page.module.css";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SiteFooter from "./components/SiteFooter";
 import Navbar from "./components/Navbar";
 import { Truck, Coins, FastForward, Package, PackageOpen, Box } from "lucide-react";
 
+const homeHeroSlides = [
+  {
+    image: "/cargo1.jpg",
+    subtitle: "FAST & SECURE MOVE",
+    title: (
+      <>
+        MOVING YOUR ITEMS <br />
+        HAS NEVER BEEN<br />
+        <span className={styles.heroHighlight}>SO EASY</span>
+      </>
+    ),
+  },
+  {
+    image: "/cargo2.jpg",
+    subtitle: "REAL-TIME TRACKING",
+    title: (
+      <>
+        YOUR CARGO STAYS<br />
+        IN SAFE HANDS<br />
+        <span className={styles.heroHighlight}>EVERY STEP</span>
+      </>
+    ),
+  },
+];
+
 export default function Home() {
   const router = useRouter();
   const [trackId, setTrackId] = useState("");
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+
+  useEffect(() => {
+    const heroInterval = window.setInterval(() => {
+      setActiveHeroIndex((current) => (current + 1) % homeHeroSlides.length);
+    }, 3000);
+
+    return () => window.clearInterval(heroInterval);
+  }, []);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +59,13 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className={styles.hero}>
-        <img src="/cargo1.jpg" alt="Cargo Background" className={styles.truckBg} />
+        <img src={homeHeroSlides[activeHeroIndex].image} alt="Cargo Background" className={styles.truckBg} />
         <div className={styles.heroOverlay}></div>
 
         <div className={styles.heroInner}>
           <div className={styles.heroLeft}>
-            <div className={styles.heroSubtitle}>FAST & SECURE MOVE</div>
-            <h1 className={styles.heroTitle}>MOVING YOUR ITEMS <br />HAS NEVER BEEN<br /><span className={styles.heroHighlight}>SO EASY</span></h1>
+            <div className={styles.heroSubtitle}>{homeHeroSlides[activeHeroIndex].subtitle}</div>
+            <h1 className={styles.heroTitle}>{homeHeroSlides[activeHeroIndex].title}</h1>
 
             <button className={styles.getStartedBtn}>
               GET STARTED <div className={styles.getStartedIcon}>&gt;</div>
@@ -76,7 +110,7 @@ export default function Home() {
       {/* About Us (Transport & Logistics) */}
       <section className={styles.aboutSection}>
         <div className={styles.aboutImageWrapper}>
-          <img src="/man3.jpg" alt="About us" className={styles.aboutImage} />
+          <img src="/man1.jpg" alt="About us" className={styles.aboutImage} />
           <div className={styles.experienceBadge}>
             <h2>23</h2>
             <p>YEARS<br />OF<br />EXPERIENCE</p>
@@ -87,11 +121,11 @@ export default function Home() {
           <h2 className={styles.aboutTitle}>TRANSPORT &<br /><span>LOGISTICS</span></h2>
           <p className={styles.aboutText}>We are a leading global logistics and express delivery company dedicated to providing seamless, fast, and secure transportation solutions. With state-of-the-art tracking systems and a robust network, we guarantee the safety of your packages from dispatch to delivery.</p>
           <p className={styles.aboutText}>Our commitment to excellence has driven us to innovate constantly, ensuring that both businesses and individuals can rely on us for their most critical shipping needs.</p>
-          <div className={styles.socialIcons}>
+          {/* <div className={styles.socialIcons}>
             <a href="#">t</a>
             <a href="#">f</a>
             <a href="#">in</a>
-          </div>
+          </div> */}
         </div>
       </section>
 
@@ -186,7 +220,7 @@ export default function Home() {
         <div className={styles.premiumContent}>
           <div className={styles.premiumBadge}>Premium Service</div>
           <h2 className={styles.premiumTitle}>Special Care Packages,<br />Delivered with Precision</h2>
-          <p className={styles.premiumText}>At ExpressShipDel, we understand the importance of handling special care packages with extra attention and precision. Whether it&apos;s fragile, high-value, or time-sensitive, our team ensures secure, on-time delivery with top-notch tracking and support.</p>
+          <p className={styles.premiumText}>At ExpressShipDelivery, we understand the importance of handling special care packages with extra attention and precision. Whether it&apos;s fragile, high-value, or time-sensitive, our team ensures secure, on-time delivery with top-notch tracking and support.</p>
 
           <div className={styles.premiumGrid}>
             <div className={styles.pItem}>
@@ -288,38 +322,38 @@ export default function Home() {
           <h2 className={styles.commitTitle}>Our Commitment to Seamless Logistics</h2>
           <p className={styles.commitSubtitle}>Delivering efficiency, security, and reliability—tailored to your needs.</p>
         </div>
-        
+
         <div className={styles.commitGrid}>
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Truck size={32} /></div>
             <h3>Express Last-Mile Delivery</h3>
             <p>Distance is never a challenge. We pick up directly from your location and ensure safe, timely delivery anywhere you need. From urgent documents to large shipments, our dedicated fleet is ready for same-day deliveries.</p>
           </div>
-          
+
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Coins size={32} /></div>
             <h3>CargoNest Partner Program</h3>
             <p>Join our network and turn your vehicle into a steady source of income. Whether you have a bike, van, or truck, CargoNest connects you with delivery requests while ensuring fair earnings.</p>
           </div>
-          
+
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><FastForward size={32} /></div>
             <h3>Priority Freight Services</h3>
             <p>Need your shipment to arrive on time, every time? Our priority shipping ensures your package is handled with urgency and care, making timely delivery a guarantee, not a possibility.</p>
           </div>
-          
+
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Package size={32} /></div>
             <h3>Secure Storage Solutions</h3>
             <p>Whether you need short-term warehousing or long-term storage, CargoNest offers secure, climate-controlled facilities to keep your goods safe until they're ready for transport.</p>
           </div>
-          
+
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><PackageOpen size={32} /></div>
             <h3>E-Commerce Fulfillment</h3>
             <p>Sell online? We handle inventory storage, order processing, and nationwide delivery—so you can focus on growing your business while we take care of logistics.</p>
           </div>
-          
+
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Box size={32} /></div>
             <h3>Specialized Cargo Handling</h3>

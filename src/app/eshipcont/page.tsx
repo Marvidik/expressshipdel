@@ -42,7 +42,7 @@ export default function AdminLogin() {
   return (
     <div className={styles.loginContainer}>
       <div className={styles.loginCard}>
-        <img src="/noship.png" alt="ExpressShipDel" />
+        <img src="/noship.png" alt="ExpressShipDelivery" />
         <h2>Admin Portal</h2>
         <p style={{ color: "#888", marginBottom: "2rem", fontSize: "0.9rem" }}>
           Sign in to manage shipments and tracking
@@ -75,7 +75,7 @@ export default function AdminLogin() {
           </button>
         </form>
         <p style={{ marginTop: "1.5rem", color: "#aaa", fontSize: "0.8rem" }}>
-          Default: admin@expressshipdel.com / Admin@1234
+          Default: admin@expreshipdeliv.com  / Admin@1234
         </p>
       </div>
     </div>

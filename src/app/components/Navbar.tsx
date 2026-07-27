@@ -14,9 +14,9 @@ export default function Navbar() {
   return (
     <nav className={styles.nav}>
       <Link href="/" className={styles.logo}>
-        <img src="/noship.png" alt="ExpressShipDel" style={{ height: '35px', objectFit: 'contain' }} />
+        <img src="/noship.png" alt="ExpressShipDelivery" style={{ height: '35px', objectFit: 'contain' }} />
       </Link>
-      
+
       <div className={styles.hamburger} onClick={toggleMenu}>
         <div className={`${styles.bar} ${isOpen ? styles.bar1 : ""}`}></div>
         <div className={`${styles.bar} ${isOpen ? styles.bar2 : ""}`}></div>

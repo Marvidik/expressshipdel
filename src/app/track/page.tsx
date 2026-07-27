@@ -47,6 +47,7 @@ export default function TrackPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [shipment, setShipment] = useState<ShipmentData | null>(null);
   const [error, setError] = useState("");
+  const [heroImage, setHeroImage] = useState("/cargo1.jpg");
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -55,6 +56,14 @@ export default function TrackPage() {
       setTrackingId(id);
       triggerSearch(id);
     }
+  }, []);
+
+  useEffect(() => {
+    const imageInterval = window.setInterval(() => {
+      setHeroImage((current) => (current === "/cargo1.jpg" ? "/cargo2.jpg" : "/cargo1.jpg"));
+    }, 3000);
+
+    return () => window.clearInterval(imageInterval);
   }, []);
 
   const triggerSearch = async (id: string) => {
@@ -158,7 +167,7 @@ export default function TrackPage() {
       <section className={styles.trackSection}>
         <div className={styles.trackHeader}>
           <div className={styles.heroOverlay}></div>
-          <img src="/cargo2.jpg" alt="Track background" className={styles.heroBg} />
+          <img src={heroImage} alt="Track background" className={styles.heroBg} />
           <div className={styles.heroContent}>
             <h1>Track Order</h1>
             <p>Enter your tracking number to get real-time updates on your shipment&apos;s location, status, and expected delivery.</p>
@@ -328,7 +337,7 @@ export default function TrackPage() {
 
             <div className={styles.barcodeCard}>
               <Barcode value={shipment.trackingId} />
-              <p className={styles.barcodeHint}>Scan this barcode at any ExpressShipDel service centre</p>
+              <p className={styles.barcodeHint}>Scan this barcode at any ExpressShipDelivery service centre</p>
             </div>
           </div>
         )}

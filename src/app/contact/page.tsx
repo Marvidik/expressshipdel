@@ -16,7 +16,7 @@ export default function ContactPage() {
         <img src="/cargo2.jpg" alt="Contact background" className={styles.heroBg} />
         <div className={styles.heroContent}>
           <p className={styles.heroSub}>GET IN TOUCH</p>
-          <h1>Contact <span>ExpressShipDel</span></h1>
+          <h1>Contact <span>ExpressShipDelivery</span></h1>
           <p>Have a question, need a quote, or want to schedule a pickup? Our team is available 24/7 and ready to help.</p>
         </div>
       </section>
@@ -59,7 +59,7 @@ export default function ContactPage() {
             <div className={styles.infoCard}>
               <div className={styles.infoIcon}>✉️</div>
               <h4>Email Us</h4>
-              <p>contact@expressshipdel.com</p>
+              <p>contact@expreshipdeliv.com </p>
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoIcon}>📍</div>

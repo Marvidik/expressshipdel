@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className={styles.topProfile}>
             <div className={styles.profileInfo}>
               <p>Admin</p>
-              <span>ExpressShipDel</span>
+              <span>ExpressShipDelivery</span>
             </div>
             <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700 }}>
               A
