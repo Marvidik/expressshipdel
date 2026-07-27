@@ -332,8 +332,8 @@ export default function Home() {
 
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Coins size={32} /></div>
-            <h3>CargoNest Partner Program</h3>
-            <p>Join our network and turn your vehicle into a steady source of income. Whether you have a bike, van, or truck, CargoNest connects you with delivery requests while ensuring fair earnings.</p>
+            <h3>ExpressShipDelivery Partner Program</h3>
+            <p>Join our network and turn your vehicle into a steady source of income. Whether you have a bike, van, or truck, ExpressShipDelivery connects you with delivery requests while ensuring fair earnings.</p>
           </div>
 
           <div className={styles.commitCard}>
@@ -345,7 +345,7 @@ export default function Home() {
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Package size={32} /></div>
             <h3>Secure Storage Solutions</h3>
-            <p>Whether you need short-term warehousing or long-term storage, CargoNest offers secure, climate-controlled facilities to keep your goods safe until they're ready for transport.</p>
+            <p>Whether you need short-term warehousing or long-term storage, ExpressShipDelivery offers secure, climate-controlled facilities to keep your goods safe until they're ready for transport.</p>
           </div>
 
           <div className={styles.commitCard}>
