@@ -11,12 +11,13 @@ import { Truck, Coins, FastForward, Package, PackageOpen, Box } from "lucide-rea
 const homeHeroSlides = [
   {
     image: "/cargo1.jpg",
-    subtitle: "FAST & SECURE MOVE",
+    subtitle: "EXPRESSSHIP DELIVERY",
     title: (
       <>
+
         MOVING YOUR ITEMS <br />
-        HAS NEVER BEEN<br />
-        <span className={styles.heroHighlight}>SO EASY</span>
+        SO EASY WITH<br />
+        <span className={styles.heroHighlight}>EXPRESSSHIP DELIVERY</span>
       </>
     ),
   },
@@ -26,8 +27,8 @@ const homeHeroSlides = [
     title: (
       <>
         YOUR CARGO STAYS<br />
-        IN SAFE HANDS<br />
-        <span className={styles.heroHighlight}>EVERY STEP</span>
+        IN SAFE HANDS WITH<br />
+        <span className={styles.heroHighlight}>EXPRESSSHIP DELIVERY</span>
       </>
     ),
   },
@@ -67,7 +68,11 @@ export default function Home() {
             <div className={styles.heroSubtitle}>{homeHeroSlides[activeHeroIndex].subtitle}</div>
             <h1 className={styles.heroTitle}>{homeHeroSlides[activeHeroIndex].title}</h1>
 
-            <button className={styles.getStartedBtn}>
+            <button
+              type="button"
+              className={styles.getStartedBtn}
+              onClick={() => router.push("/track")}
+            >
               GET STARTED <div className={styles.getStartedIcon}>&gt;</div>
             </button>
 
@@ -119,7 +124,7 @@ export default function Home() {
         <div className={styles.aboutContent}>
           <div className={styles.aboutSubtitle}>ABOUT US</div>
           <h2 className={styles.aboutTitle}>TRANSPORT &<br /><span>LOGISTICS</span></h2>
-          <p className={styles.aboutText}>We are a leading global logistics and express delivery company dedicated to providing seamless, fast, and secure transportation solutions. With state-of-the-art tracking systems and a robust network, we guarantee the safety of your packages from dispatch to delivery.</p>
+          <p className={styles.aboutText}>ExpressShip Delivery is a leading global logistics and express delivery company dedicated to providing seamless, fast, and secure transportation solutions. With state-of-the-art tracking systems and a robust network, we guarantee the safety of your packages from dispatch to delivery.</p>
           <p className={styles.aboutText}>Our commitment to excellence has driven us to innovate constantly, ensuring that both businesses and individuals can rely on us for their most critical shipping needs.</p>
           {/* <div className={styles.socialIcons}>
             <a href="#">t</a>
@@ -220,7 +225,7 @@ export default function Home() {
         <div className={styles.premiumContent}>
           <div className={styles.premiumBadge}>Premium Service</div>
           <h2 className={styles.premiumTitle}>Special Care Packages,<br />Delivered with Precision</h2>
-          <p className={styles.premiumText}>At ExpressShipDelivery, we understand the importance of handling special care packages with extra attention and precision. Whether it&apos;s fragile, high-value, or time-sensitive, our team ensures secure, on-time delivery with top-notch tracking and support.</p>
+          <p className={styles.premiumText}>At ExpressShip Delivery, we understand the importance of handling special care packages with extra attention and precision. Whether it&apos;s fragile, high-value, or time-sensitive, our team ensures secure, on-time delivery with top-notch tracking and support.</p>
 
           <div className={styles.premiumGrid}>
             <div className={styles.pItem}>
@@ -241,7 +246,7 @@ export default function Home() {
             </div>
           </div>
 
-          <button className={styles.premiumBtn}>Learn More &rarr;</button>
+          <button type="button" className={styles.premiumBtn} onClick={() => router.push("/about")}>Learn More &rarr;</button>
 
           <div className={styles.premiumChecks}>
             <span><span className={styles.pCheck}>✔</span> Insured Shipping</span>
@@ -313,7 +318,7 @@ export default function Home() {
           </div>
         </div>
 
-        <button className={styles.testiBtn}>Get started</button>
+        <button type="button" className={styles.testiBtn} onClick={() => router.push("/track")}>Get started</button>
       </section>
 
       {/* Commitment Section */}
@@ -332,7 +337,7 @@ export default function Home() {
 
           <div className={styles.commitCard}>
             <div className={styles.commitIcon}><Coins size={32} /></div>
-            <h3>ExpressShipDelivery Partner Program</h3>
+            <h3>ExpressShip Delivery Partner Program</h3>
             <p>Join our network and turn your vehicle into a steady source of income. Whether you have a bike, van, or truck, ExpressShipDelivery connects you with delivery requests while ensuring fair earnings.</p>
           </div>
 

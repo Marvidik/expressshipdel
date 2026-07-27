@@ -18,9 +18,9 @@ export default function SiteFooter() {
         </div>
         <div className={styles.footerCol}>
           <h4>Services</h4>
-          <Link href="#">Skateboard delivery</Link>
-          <Link href="#">Bicycle delivery</Link>
-          <Link href="#">Motor bike delivery</Link>
+          <Link href="#">Ship & Delivery</Link>
+          <Link href="#">Air Freight</Link>
+          <Link href="#">Local Distribution</Link>
         </div>
         <div className={styles.footerCol}>
           <h4>Legal</h4>
