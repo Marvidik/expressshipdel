@@ -14,8 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BYKE - Express Delivery",
-  description: "Your most affordable and reliable delivery service provider",
+  title: "ExpressShipDelivery",
+  description: "Fast, secure, and reliable logistics and delivery services",
+  icons: {
+    icon: "/shiplogo.png",
+    shortcut: "/shiplogo.png",
+    apple: "/shiplogo.png",
+  },
 };
 
 export default function RootLayout({
