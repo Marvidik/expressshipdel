@@ -5,7 +5,7 @@ import styles from "./contact.module.css";
 import SiteFooter from "../components/SiteFooter";
 import Navbar from "../components/Navbar";
 
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mkodynwl";
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xdaqbjna";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -139,7 +139,7 @@ export default function ContactPage() {
             <div className={styles.infoCard}>
               <div className={styles.infoIcon}>✉️</div>
               <h4>Email Us</h4>
-              <p>savvybittechnology@gmail.com</p>
+              <p>contact@expreshipdeliv.com</p>
             </div>
             <div className={styles.infoCard}>
               <div className={styles.infoIcon}>📍</div>

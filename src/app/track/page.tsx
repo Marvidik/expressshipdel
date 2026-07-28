@@ -25,6 +25,7 @@ interface ShipmentData {
     type: string; mode: string; referenceNo: string; product: string;
     quantity: number; paymentMode: string; totalFreight: string; totalWeight: string;
   };
+  goodsImage?: string;
   timeline: Array<{ status: string; location: string; date: string; done: boolean; active: boolean; }>;
 }
 
@@ -135,6 +136,7 @@ export default function TrackPage() {
             totalFreight: data.total_freight || "-",
             totalWeight: data.total_weight || "-",
           },
+          goodsImage: data.goods_image || "",
           timeline,
         };
         setShipment(mapped);
@@ -168,6 +170,11 @@ export default function TrackPage() {
         <div className={styles.trackHeader}>
           <div className={styles.heroOverlay}></div>
           <img src={heroImage} alt="Track background" className={styles.heroBg} />
+          <div className={styles.heroContent1}>
+            <h1>
+              <span>ExpressShipDelivery</span>
+            </h1>
+          </div>
           <div className={styles.heroContent}>
             <h1>Track Order</h1>
             <p>Enter your tracking number to get real-time updates on your shipment&apos;s location, status, and expected delivery.</p>
@@ -267,6 +274,13 @@ export default function TrackPage() {
                 ))}
               </div>
             </div>
+
+            {shipment.goodsImage && (
+              <div className={styles.infoCard}>
+                <h3 className={styles.cardTitle}>Goods Image</h3>
+                <img src={shipment.goodsImage} alt="Shipment goods" className={styles.goodsImage} />
+              </div>
+            )}
 
             {/* Timeline + Receiver/Sender */}
             <div className={styles.infoGrid}>

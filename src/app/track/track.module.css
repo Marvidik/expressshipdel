@@ -12,7 +12,7 @@
   padding: 1.5rem 5%;
   background: #cecece;
   color: var(--foreground);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -39,7 +39,8 @@
   transition: color 0.2s;
 }
 
-.navLinks a:hover, .navActive {
+.navLinks a:hover,
+.navActive {
   color: var(--primary) !important;
 }
 
@@ -97,15 +98,42 @@
   z-index: 3;
 }
 
+.heroContent1 {
+  position: relative;
+  z-index: 3;
+  margin-bottom: 0.75rem;
+}
+
+.heroContent1 h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+.heroContent1 span {
+  display: inline-block;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 90, 54, 0.16);
+  color: var(--primary);
+  border: 1px solid rgba(255, 90, 54, 0.35);
+  box-shadow: 0 6px 20px rgba(255, 90, 54, 0.15);
+  text-align: center;
+  max-width: 100%;
+  word-break: break-word;
+}
+
 .trackHeader h1 {
-  font-size: 3rem;
+  font-size: clamp(1.8rem, 4vw, 3rem);
   margin-bottom: 1rem;
 }
 
 .trackHeader p {
   max-width: 550px;
   margin: 0 auto;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
 }
 
@@ -116,7 +144,7 @@
   margin: -2.5rem auto 3rem;
   background: var(--white);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   padding: 0.5rem;
 }
 
@@ -186,8 +214,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
@@ -235,7 +268,7 @@
 
 .statusLabel {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 0.3rem;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -243,7 +276,7 @@
 
 .statusMsg {
   font-size: 0.95rem;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   max-width: 500px;
   line-height: 1.5;
 }
@@ -264,7 +297,7 @@
   background: var(--white);
   border-radius: 12px;
   padding: 4rem 3rem 3rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .progressBar {
@@ -323,9 +356,17 @@
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.4); }
-  70% { box-shadow: 0 0 0 12px rgba(255, 90, 54, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 90, 54, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 90, 54, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
+  }
 }
 
 .activePulse {
@@ -363,8 +404,15 @@
 }
 
 @keyframes dotBounce {
-  from { transform: scale(1); opacity: 1; }
-  to   { transform: scale(1.5); opacity: 0.6; }
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  to {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
 }
 
 .statusPillMoving {
@@ -377,8 +425,15 @@
 }
 
 @keyframes pillPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255,90,54,0.5); }
-  50% { box-shadow: 0 0 0 8px rgba(255,90,54,0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 90, 54, 0);
+  }
 }
 
 /* Movement badge in timeline */
@@ -418,7 +473,7 @@
   background: var(--white);
   border-radius: 8px;
   padding: 0.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
@@ -458,11 +513,13 @@
 }
 
 /* Cards */
-.infoCard, .timelineCard, .barcodeCard {
+.infoCard,
+.timelineCard,
+.barcodeCard {
   background: var(--white);
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .cardTitle {
@@ -473,6 +530,14 @@
   padding-bottom: 0.8rem;
   border-bottom: 2px solid var(--primary);
   display: inline-block;
+}
+
+.goodsImage {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
 }
 
 .infoRow {
@@ -631,6 +696,7 @@
   .infoGrid {
     grid-template-columns: 1fr;
   }
+
   .shipGrid {
     grid-template-columns: 1fr;
     gap: 0;
@@ -638,38 +704,73 @@
 }
 
 @media (max-width: 768px) {
+  .trackHeader {
+    padding: 6rem 1.25rem 7rem;
+  }
+
+  .heroContent1 {
+    margin-bottom: 0.6rem;
+  }
+
+  .heroContent1 h1 {
+    font-size: 1.15rem;
+    letter-spacing: 0.05em;
+  }
+
+  .heroContent1 span {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .trackHeader h1 {
+    font-size: 1.7rem;
+    line-height: 1.2;
+  }
+
+  .trackHeader p {
+    font-size: 0.95rem;
+  }
+
   .navLinks {
     display: none;
   }
+
   .searchContainer {
     margin: -2.5rem 1rem 3rem;
   }
+
   .searchForm {
     flex-direction: column;
   }
+
   .searchInput {
     border-radius: 10px 10px 0 0;
   }
+
   .trackBtn {
     border-radius: 0 0 10px 10px;
     padding: 1rem;
   }
+
   .statusBanner {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
   }
+
   .statusLeft {
     flex-direction: column;
     gap: 1rem;
   }
+
   .statusRight {
     text-align: left;
   }
+
   .progressSection {
     overflow-x: auto;
     padding: 4rem 1rem 3rem;
   }
+
   .progressBar {
     min-width: 600px;
   }
@@ -730,6 +831,7 @@
   0% {
     offset-distance: 0%;
   }
+
   100% {
     offset-distance: 100%;
   }
@@ -742,7 +844,7 @@
   background: var(--white);
   padding: 0.8rem 1.2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -756,20 +858,22 @@
   background: var(--white);
   padding: 0.8rem 1.2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   gap: 0.8rem;
   z-index: 3;
 }
 
-.mapInfoOrigin p, .mapInfoDest p {
+.mapInfoOrigin p,
+.mapInfoDest p {
   font-size: 0.9rem;
   color: var(--foreground);
   margin-bottom: 0.2rem;
 }
 
-.mapInfoOrigin span, .mapInfoDest span {
+.mapInfoOrigin span,
+.mapInfoDest span {
   font-size: 0.75rem;
   color: #888;
 }
@@ -792,9 +896,20 @@
   .mapContainer {
     height: 300px;
   }
-  .mapInfoOrigin, .mapInfoDest {
+
+  .mapInfoOrigin,
+  .mapInfoDest {
     transform: scale(0.8);
   }
-  .mapInfoOrigin { left: 50px; top: 120px; }
-  .mapInfoDest { left: auto; right: 20px; top: 60px; }
+
+  .mapInfoOrigin {
+    left: 50px;
+    top: 120px;
+  }
+
+  .mapInfoDest {
+    left: auto;
+    right: 20px;
+    top: 60px;
+  }
 }

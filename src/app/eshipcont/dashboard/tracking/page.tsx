@@ -35,12 +35,36 @@ const EMPTY_FORM = {
   paymentMode: "Cash",
   totalFreight: "",
   totalWeight: "",
+  goodsImage: "",
 };
 
 import { Save, Plus, X, Package, MapPin, User, Send, Truck, CheckCircle, Loader2 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../../config";
 import { useSearchParams } from "next/navigation";
+
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "oyo6pxwg";
+const CLOUDINARY_UNSIGNED_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET || "expressship";
+
+async function uploadToCloudinary(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_UNSIGNED_PRESET);
+  formData.append("folder", "expressship");
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Image upload failed.");
+  }
+
+  const data = await response.json();
+  return data.secure_url as string;
+}
 
 export default function TrackingAdminPage() {
   const searchParams = useSearchParams();
@@ -51,68 +75,76 @@ export default function TrackingAdminPage() {
   ]);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (editId) {
       fetch(`${API_BASE_URL}/public/administrator/admin/shipments/${editId}/`, {
         headers: { "Authorization": `Token ${localStorage.getItem("eshipcont_token")}` }
       })
-      .then(res => res.json())
-      .then(data => {
-        if(data && data.info) {
-          const contact = data.delivery_contacts?.[0] || {};
-          setForm({
-            trackingId: data.tracking_id || "",
-            status: data.info.status || "In Transit",
-            isMoving: data.info.movement_status === "Moving",
-            latestUpdate: data.info.latest_message || "",
-            expectedDelivery: data.info.expected_delivery_date || "",
-            receiverName: contact.contact_name || "",
-            receiverEmail: contact.contact_email || "",
-            receiverPhone: contact.contact_phone || "",
-            receiverAddress: contact.contact_address || "",
-            senderName: contact.sender_name || "",
-            senderEmail: contact.sender_email || "",
-            senderPhone: contact.sender_phone || "",
-            senderAddress: contact.sender_address || "",
-            origin: data.origin || "",
-            destination: data.destination || "",
-            currentLocation: data.info.current_location || "",
-            package: data.package_type || "Standard",
-            carrier: data.carrier || "",
-            type: data.shipment_type || "Freight",
-            mode: data.shipment_mode || "Flight",
-            referenceNo: data.info.reference || "",
-            product: data.product || "",
-            quantity: data.quantity?.toString() || "1",
-            paymentMode: data.payment_mode || "Cash",
-            totalFreight: data.total_freight || "",
-            totalWeight: data.total_weight || "",
-          });
-          
-          if (data.movement_locations && data.movement_locations.length > 0) {
-            setRoute(data.movement_locations.map((loc: any) => {
-              // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
-              let dateVal = "";
-              if (loc.timestamp) {
-                try {
-                  const d = new Date(loc.timestamp);
-                  dateVal = d.toISOString().slice(0, 16); // "2026-07-26T09:30"
-                } catch { dateVal = loc.timestamp; }
-              }
-              return { location: loc.location, date: dateVal, status: loc.status };
-            }));
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.info) {
+            const contact = data.delivery_contacts?.[0] || {};
+            setForm({
+              trackingId: data.tracking_id || "",
+              status: data.info.status || "In Transit",
+              isMoving: data.info.movement_status === "Moving",
+              latestUpdate: data.info.latest_message || "",
+              expectedDelivery: data.info.expected_delivery_date || "",
+              receiverName: contact.contact_name || "",
+              receiverEmail: contact.contact_email || "",
+              receiverPhone: contact.contact_phone || "",
+              receiverAddress: contact.contact_address || "",
+              senderName: contact.sender_name || "",
+              senderEmail: contact.sender_email || "",
+              senderPhone: contact.sender_phone || "",
+              senderAddress: contact.sender_address || "",
+              origin: data.origin || "",
+              destination: data.destination || "",
+              currentLocation: data.info.current_location || "",
+              package: data.package_type || "Standard",
+              carrier: data.carrier || "",
+              type: data.shipment_type || "Freight",
+              mode: data.shipment_mode || "Flight",
+              referenceNo: data.info.reference || "",
+              product: data.product || "",
+              quantity: data.quantity?.toString() || "1",
+              paymentMode: data.payment_mode || "Cash",
+              totalFreight: data.total_freight || "",
+              totalWeight: data.total_weight || "",
+              goodsImage: data.goods_image || "",
+            });
+
+            if (data.movement_locations && data.movement_locations.length > 0) {
+              setRoute(data.movement_locations.map((loc: any) => {
+                // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
+                let dateVal = "";
+                if (loc.timestamp) {
+                  try {
+                    const d = new Date(loc.timestamp);
+                    dateVal = d.toISOString().slice(0, 16); // "2026-07-26T09:30"
+                  } catch { dateVal = loc.timestamp; }
+                }
+                return { location: loc.location, date: dateVal, status: loc.status };
+              }));
+            }
           }
-        }
-      })
-      .catch(err => console.error("Failed to fetch shipment", err));
+        })
+        .catch(err => console.error("Failed to fetch shipment", err));
     }
   }, [editId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
   };
 
   const handleRouteChange = (idx: number, field: keyof RouteStop, value: string) => {
@@ -124,7 +156,23 @@ export default function TrackingAdminPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    let finalGoodsImage = form.goodsImage.trim();
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        finalGoodsImage = await uploadToCloudinary(selectedFile);
+        setForm(prev => ({ ...prev, goodsImage: finalGoodsImage }));
+      } catch (err: any) {
+        setSaveError(err.message || "Image upload failed.");
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     // Construct payload
     const payload: any = {
       ...(form.trackingId ? { tracking_id: form.trackingId } : {}),
@@ -139,6 +187,7 @@ export default function TrackingAdminPage() {
       payment_mode: form.paymentMode,
       total_freight: form.totalFreight,
       total_weight: form.totalWeight,
+      ...(finalGoodsImage ? { goods_image: finalGoodsImage } : {}),
       info: {
         status: form.status,
         latest_message: form.latestUpdate,
@@ -165,10 +214,10 @@ export default function TrackingAdminPage() {
       }))
     };
 
-    const url = editId 
-      ? `${API_BASE_URL}/public/administrator/admin/shipments/${editId}/` 
+    const url = editId
+      ? `${API_BASE_URL}/public/administrator/admin/shipments/${editId}/`
       : `${API_BASE_URL}/public/administrator/admin/shipments/`;
-      
+
     const method = editId ? "PATCH" : "POST";
 
     setIsSaving(true);
@@ -177,7 +226,7 @@ export default function TrackingAdminPage() {
     try {
       const res = await fetch(url, {
         method,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Token ${localStorage.getItem("eshipcont_token")}`
         },
@@ -185,6 +234,7 @@ export default function TrackingAdminPage() {
       });
       if (res.ok) {
         setSaved(true);
+        setSelectedFile(null);
         setTimeout(() => setSaved(false), 3000);
       } else {
         const text = await res.text();
@@ -207,9 +257,9 @@ export default function TrackingAdminPage() {
     <form onSubmit={handleSave}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Tracking Manager</h1>
-        <button type="submit" disabled={isSaving} className={styles.actionBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSaving ? 0.7 : 1 }}>
-          {isSaving ? <Loader2 size={18} className={styles.spin} /> : saved ? <CheckCircle size={18} /> : <Save size={18} />} 
-          {isSaving ? "Saving..." : saved ? "Saved!" : "Save Shipment"}
+        <button type="submit" disabled={isSaving || isUploading} className={styles.actionBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isSaving || isUploading ? 0.7 : 1 }}>
+          {isSaving || isUploading ? <Loader2 size={18} className={styles.spin} /> : saved ? <CheckCircle size={18} /> : <Save size={18} />}
+          {isSaving ? "Saving..." : isUploading ? "Uploading..." : saved ? "Saved!" : "Save Shipment"}
         </button>
       </div>
 
@@ -219,12 +269,12 @@ export default function TrackingAdminPage() {
         <div className={styles.formGrid}>
           <div className={styles.inputGroup}>
             <label>Tracking ID</label>
-            <input 
-              name="trackingId" 
-              value={form.trackingId} 
-              readOnly 
-              disabled 
-              placeholder="Auto-generated by system" 
+            <input
+              name="trackingId"
+              value={form.trackingId}
+              readOnly
+              disabled
+              placeholder="Auto-generated by system"
               style={{ backgroundColor: "#f0f2f5", color: "#888", cursor: "not-allowed" }}
             />
           </div>
@@ -235,6 +285,16 @@ export default function TrackingAdminPage() {
           <div className={styles.inputGroup}>
             <label>Expected Delivery Date</label>
             <input type="date" name="expectedDelivery" value={form.expectedDelivery} onChange={handleChange} />
+          </div>
+          <div className={styles.inputGroup}>
+            <label>Goods Image URL (optional)</label>
+            <input name="goodsImage" value={form.goodsImage} onChange={handleChange} placeholder="https://example.com/phones.jpg" />
+          </div>
+          <div className={styles.inputGroup}>
+            <label>Upload Goods Image</label>
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+            {selectedFile && <p style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>Selected: {selectedFile.name}</p>}
+            <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#8f9bba" }}>Images will upload to Cloudinary using the unsigned preset <strong>expressship</strong>.</p>
           </div>
           <div className={styles.inputGroup}>
             <label>Overall Status</label>
@@ -453,9 +513,9 @@ export default function TrackingAdminPage() {
         </div>
       )}
 
-      <button type="submit" disabled={isSaving} className={styles.saveBtn} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", opacity: isSaving ? 0.7 : 1 }}>
-        {isSaving ? <Loader2 size={20} className={styles.spin} /> : saved ? <CheckCircle size={20} /> : <Save size={20} />} 
-        {isSaving ? "Saving Shipment Data..." : saved ? "Shipment Saved Successfully!" : "Save Shipment Data"}
+      <button type="submit" disabled={isSaving || isUploading} className={styles.saveBtn} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", opacity: isSaving || isUploading ? 0.7 : 1 }}>
+        {isSaving || isUploading ? <Loader2 size={20} className={styles.spin} /> : saved ? <CheckCircle size={20} /> : <Save size={20} />}
+        {isSaving ? "Saving Shipment Data..." : isUploading ? "Uploading Image..." : saved ? "Shipment Saved Successfully!" : "Save Shipment Data"}
       </button>
     </form>
   );
