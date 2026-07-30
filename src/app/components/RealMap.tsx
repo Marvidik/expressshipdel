@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, Popup, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -176,14 +176,25 @@ interface MapStop {
   status: string;
   done?: boolean;
   active?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  timestamp?: number | null;
 }
 
 interface RealMapProps {
   origin?: string;
   destination?: string;
+  originLatitude?: number | null;
+  originLongitude?: number | null;
+  destLatitude?: number | null;
+  destLongitude?: number | null;
   timeline?: MapStop[];
   currentLocation?: string;
+  currentLocationLatitude?: number | null;
+  currentLocationLongitude?: number | null;
   isMoving?: boolean;
+  movementMode?: "active" | "realtime";
+  onReachedNextStop?: () => void;
 }
 
 // ── Icons ────────────────────────────────────────────────────────────────────
@@ -203,50 +214,75 @@ const pinIcon = (color: string) =>
 export default function RealMap({
   origin = "",
   destination = "",
+  originLatitude = null,
+  originLongitude = null,
+  destLatitude = null,
+  destLongitude = null,
   timeline = [],
   currentLocation = "",
+  currentLocationLatitude = null,
+  currentLocationLongitude = null,
   isMoving = true,
 }: RealMapProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  // Resolve origin & destination coords
-  const originCoords = resolveCoords(origin);
-  const destCoords = resolveCoords(destination);
+  // Resolve origin & destination coords — prefer explicit lat/lon from API
+  // Use Number() to guard against backend returning coords as strings
+  const originCoords: [number, number] | null =
+    originLatitude != null && originLongitude != null
+      ? [Number(originLatitude), Number(originLongitude)]
+      : resolveCoords(origin);
 
-  // Resolve current location coords
-  const currentCoords = resolveCoords(currentLocation);
+  const destCoords: [number, number] | null =
+    destLatitude != null && destLongitude != null
+      ? [Number(destLatitude), Number(destLongitude)]
+      : resolveCoords(destination);
 
-  // Resolve intermediate stops (only done or active, i.e. already visited)
-  const visitedStops = timeline
-    .filter(s => s.done || s.active)
-    .map(s => ({ coords: resolveCoords(s.location), ...s }))
-    .filter(s => s.coords !== null) as Array<{ coords: [number, number]; location: string; status: string; done?: boolean; active?: boolean }>;
+  // Resolve current location coords — prefer explicit lat/lon, fall back to name lookup
+  const currentCoords: [number, number] | null =
+    currentLocationLatitude != null && currentLocationLongitude != null
+      ? [Number(currentLocationLatitude), Number(currentLocationLongitude)]
+      : resolveCoords(currentLocation);
 
-  // Build the "traveled" polyline: origin → visited stops → current
+  // Resolve all timeline stops to get the exact route added by the admin
+  const allStops = timeline
+    .map(s => ({
+      coords: s.latitude != null && s.longitude != null ? [Number(s.latitude), Number(s.longitude)] : resolveCoords(s.location),
+      ...s,
+    }))
+    .filter(s => s.coords !== null) as Array<{ coords: [number, number]; location: string; status: string; done?: boolean; active?: boolean; latitude?: number | null; longitude?: number | null; timestamp?: number | null }>;
+
+  const visitedStops = allStops.filter(s => s.done || s.active);
+
+  const displayCurrentCoords = currentCoords;
+
+  // Build the "traveled" polyline: visited stops -> current
   const traveledPoints: [number, number][] = [];
-  if (originCoords) traveledPoints.push(originCoords);
   for (const stop of visitedStops) {
     const alreadyIn = traveledPoints.some(p => p[0] === stop.coords[0] && p[1] === stop.coords[1]);
     if (!alreadyIn) traveledPoints.push(stop.coords);
   }
-  if (currentCoords) {
-    const alreadyIn = traveledPoints.some(p => p[0] === currentCoords[0] && p[1] === currentCoords[1]);
-    if (!alreadyIn) traveledPoints.push(currentCoords);
+  if (displayCurrentCoords) {
+    const alreadyIn = traveledPoints.some(p => p[0] === displayCurrentCoords[0] && p[1] === displayCurrentCoords[1]);
+    if (!alreadyIn) traveledPoints.push(displayCurrentCoords);
   }
 
-  // Full planned route: origin → destination (dashed)
+  // Full planned route connects all timeline stops
   const plannedRoute: [number, number][] = [];
-  if (originCoords) plannedRoute.push(originCoords);
-  if (destCoords) plannedRoute.push(destCoords);
+  for (const stop of allStops) {
+    const alreadyIn = plannedRoute.some(p => p[0] === stop.coords[0] && p[1] === stop.coords[1]);
+    if (!alreadyIn) plannedRoute.push(stop.coords);
+  }
 
-  // Bounds fitting: show origin, destination, and current location
-  const boundsPoints: [number, number][] = [];
-  if (originCoords) boundsPoints.push(originCoords);
-  if (destCoords) boundsPoints.push(destCoords);
-  if (currentCoords) boundsPoints.push(currentCoords);
+  // Bounds fitting: fit all timeline routes + current position
+  const boundsPoints: [number, number][] = [...plannedRoute];
+  if (displayCurrentCoords) {
+    const alreadyIn = boundsPoints.some(p => p[0] === displayCurrentCoords[0] && p[1] === displayCurrentCoords[1]);
+    if (!alreadyIn) boundsPoints.push(displayCurrentCoords);
+  }
 
-  const mapCenter: [number, number] = currentCoords || originCoords || [20, 0];
+  const mapCenter: [number, number] = displayCurrentCoords || originCoords || [20, 0];
 
   if (!mounted) {
     return (
@@ -266,45 +302,53 @@ export default function RealMap({
 
         <FitBounds positions={boundsPoints} />
 
-        {/* Planned route — full dashed line origin → destination */}
-        {plannedRoute.length === 2 && (
+        {/* Planned route — full dashed line passing through all added timeline stops */}
+        {plannedRoute.length >= 2 && (
           <Polyline positions={plannedRoute} color="rgba(180,180,180,0.6)" weight={3} dashArray="8, 8" />
         )}
 
-        {/* Traveled route — solid orange line */}
+        {/* Traveled route — solid orange line for visited stops */}
         {traveledPoints.length >= 2 && (
           <Polyline positions={traveledPoints} color="#FF5A36" weight={4} />
         )}
 
-        {/* Origin marker */}
-        {originCoords && (
-          <Marker position={originCoords} icon={pinIcon("#34c759")}>
-            <Popup><strong>📍 Origin</strong><br />{origin}</Popup>
-          </Marker>
-        )}
+        {/* Render all timeline route markers (static dots) EXCEPT the one that is currently active (which gets the bouncing dot) */}
+        {allStops
+          .filter(s => {
+            // Do not draw a generic timeline marker if this is exactly the current location,
+            // to avoid rendering two dots perfectly on top of each other.
+            if (displayCurrentCoords && s.coords[0] === displayCurrentCoords[0] && s.coords[1] === displayCurrentCoords[1]) {
+              return false;
+            }
+            return true;
+          })
+          .map((stop, i) => {
+            const isFinal = stop === allStops[allStops.length - 1];
+            let color = "#aaaaaa"; // pending
+            if (isFinal) {
+              color = "#5e5ce6"; // blue for final destination
+            } else if (stop.done) {
+              color = "#34c759"; // green for done
+            } else if (stop.active) {
+              color = "#FF5A36"; // orange for active
+            }
 
-        {/* Destination marker */}
-        {destCoords && (
-          <Marker position={destCoords} icon={pinIcon("#5e5ce6")}>
-            <Popup><strong>🏁 Destination</strong><br />{destination}</Popup>
-          </Marker>
-        )}
-
-        {/* Intermediate visited stop markers (small grey dots) */}
-        {visitedStops
-          .filter(s => !s.active) // skip active, it gets the big red dot
-          .map((stop, i) => (
-            <Marker key={i} position={stop.coords} icon={pinIcon("#FF5A36")}>
-              <Popup>
-                <strong>✓ {stop.status}</strong><br />{stop.location}
-              </Popup>
-            </Marker>
-          ))}
+            return (
+              <Marker key={i} position={stop.coords} icon={pinIcon(color)}>
+                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
+                  {stop.location}
+                </Tooltip>
+                <Popup>
+                  <strong>{isFinal ? "🏁" : (stop.done ? "✓" : (stop.active ? "📍" : "⏳"))} {stop.status}</strong><br />{stop.location}
+                </Popup>
+              </Marker>
+            );
+          })}
 
         {/* Current position marker — bouncing if moving, static if stationary */}
-        {currentCoords && (
+        {displayCurrentCoords && (
           <Marker
-            position={currentCoords}
+            position={displayCurrentCoords}
             icon={L.divIcon({
               className: "",
               html: `<div class="${isMoving ? "map-dot-moving" : "map-dot-static"}"></div>`,
@@ -312,6 +356,9 @@ export default function RealMap({
               iconAnchor: [11, 11],
             })}
           >
+            <Tooltip direction="top" offset={[0, -15]} opacity={1}>
+              {currentLocation || "Current Location"}
+            </Tooltip>
             <Popup>
               <strong>{isMoving ? "🚛 In Transit" : "⏸ Stationary"}</strong>
               <br />{currentLocation || "Current Location"}

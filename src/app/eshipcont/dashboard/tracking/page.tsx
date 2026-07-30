@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import styles from "../../admin.module.css";
 
-type RouteStop = { location: string; date: string; status: string };
+type RouteStop = { location: string; date: string; status: string; latitude: number | null; longitude: number | null };
 
 const EMPTY_FORM = {
   trackingId: "",
@@ -53,10 +53,45 @@ function normalizeGoodsImages(value: unknown): string[] {
   return [];
 }
 
+function coerceNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function roundCoordinate(value: number | null | undefined): number | null {
+  if (value == null || Number.isNaN(value)) {
+    return null;
+  }
+
+  return Number(value.toFixed(6));
+}
+
+function formatMovementTimestamp(value: string): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.toISOString();
+}
+
 import { Save, Plus, X, Package, MapPin, User, Send, Truck, CheckCircle, Loader2 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../../config";
 import { useSearchParams } from "next/navigation";
+import LocationPicker from "../../../components/LocationPicker";
 
 const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "oyo6pxwg";
 const CLOUDINARY_UNSIGNED_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET || "expressship";
@@ -86,7 +121,7 @@ export default function TrackingAdminPage() {
   const editId = searchParams.get("id");
   const [form, setForm] = useState(EMPTY_FORM);
   const [route, setRoute] = useState<RouteStop[]>([
-    { location: "", date: "", status: "Label Created" },
+    { location: "", date: "", status: "Label Created", latitude: null, longitude: null },
   ]);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,6 +130,11 @@ export default function TrackingAdminPage() {
   const [goodsImageEntries, setGoodsImageEntries] = useState<string[]>([]);
   const [goodsImageUrlInput, setGoodsImageUrlInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [currentLocationValue, setCurrentLocationValue] = useState({ location: "", latitude: null as number | null, longitude: null as number | null });
+  const [movementLocationValue, setMovementLocationValue] = useState({ location: "", latitude: null as number | null, longitude: null as number | null });
+  const [originValue, setOriginValue] = useState({ location: "", latitude: null as number | null, longitude: null as number | null });
+  const [destinationValue, setDestinationValue] = useState({ location: "", latitude: null as number | null, longitude: null as number | null });
+  const [mapMovement, setMapMovement] = useState("active");
 
   useEffect(() => {
     if (editId) {
@@ -135,19 +175,38 @@ export default function TrackingAdminPage() {
               goodsImage: "",
             });
             setGoodsImageEntries(normalizeGoodsImages(data.goods_image));
+            setCurrentLocationValue({
+              location: data.info.current_location || "",
+              latitude: coerceNumber(data.info.current_location_latitude),
+              longitude: coerceNumber(data.info.current_location_longitude),
+            });
+            setOriginValue({
+              location: data.origin || "",
+              latitude: coerceNumber(data.origin_latitude),
+              longitude: coerceNumber(data.origin_longitude),
+            });
+            setDestinationValue({
+              location: data.destination || "",
+              latitude: coerceNumber(data.destination_latitude),
+              longitude: coerceNumber(data.destination_longitude),
+            });
+            // Read map_movement from backend
+            setMapMovement(data.map_movement === true ? "realtime" : "active");
 
             if (data.movement_locations && data.movement_locations.length > 0) {
-              setRoute(data.movement_locations.map((loc: any) => {
-                // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
+              const normalizedRoute = data.movement_locations.map((loc: any) => {
                 let dateVal = "";
                 if (loc.timestamp) {
                   try {
                     const d = new Date(loc.timestamp);
-                    dateVal = d.toISOString().slice(0, 16); // "2026-07-26T09:30"
-                  } catch { dateVal = loc.timestamp; }
+                    dateVal = d.toISOString().slice(0, 16);
+                  } catch {
+                    dateVal = loc.timestamp;
+                  }
                 }
-                return { location: loc.location, date: dateVal, status: loc.status };
-              }));
+                return { location: loc.location, date: dateVal, status: loc.status, latitude: coerceNumber(loc.latitude), longitude: coerceNumber(loc.longitude) };
+              });
+              setRoute(normalizedRoute);
             }
           }
         })
@@ -198,11 +257,28 @@ export default function TrackingAdminPage() {
     setRoute(prev => prev.map((stop, i) => i === idx ? { ...stop, [field]: value } : stop));
   };
 
-  const addStop = () => setRoute(prev => [...prev, { location: "", date: "", status: "In Transit" }]);
+  const handleRouteLocationChange = (idx: number, value: { location: string; latitude: number | null; longitude: number | null }) => {
+    setRoute(prev => prev.map((stop, i) => i === idx ? { ...stop, location: value.location, latitude: value.latitude, longitude: value.longitude } : stop));
+  };
+
+  const addStop = () => setRoute(prev => [...prev, { location: "", date: "", status: "In Transit", latitude: null, longitude: null }]);
   const removeStop = (idx: number) => setRoute(prev => prev.filter((_, i) => i !== idx));
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const currentLocationError = !currentLocationValue.location || currentLocationValue.latitude == null || currentLocationValue.longitude == null
+      ? "Please choose a current location from the dropdown and confirm the map marker."
+      : null;
+
+    const movementLocationError = route.some((stop) => stop.location.trim() && (stop.latitude == null || stop.longitude == null))
+      ? "Please choose a location from the dropdown for each movement stop that has a name."
+      : null;
+
+    if (currentLocationError || movementLocationError) {
+      setSaveError(currentLocationError || movementLocationError || "Please complete the location details.");
+      return;
+    }
 
     const parsedGoodsImages = goodsImageEntries.filter(Boolean);
     const uploadedGoodsImages: string[] = [];
@@ -228,8 +304,12 @@ export default function TrackingAdminPage() {
     // Construct payload
     const payload: any = {
       ...(form.trackingId ? { tracking_id: form.trackingId } : {}),
-      origin: form.origin,
-      destination: form.destination,
+      origin: originValue.location || form.origin,
+      destination: destinationValue.location || form.destination,
+      ...(roundCoordinate(originValue.latitude) != null ? { origin_latitude: roundCoordinate(originValue.latitude) } : {}),
+      ...(roundCoordinate(originValue.longitude) != null ? { origin_longitude: roundCoordinate(originValue.longitude) } : {}),
+      ...(roundCoordinate(destinationValue.latitude) != null ? { destination_latitude: roundCoordinate(destinationValue.latitude) } : {}),
+      ...(roundCoordinate(destinationValue.longitude) != null ? { destination_longitude: roundCoordinate(destinationValue.longitude) } : {}),
       carrier: form.carrier,
       package_type: form.package,
       shipment_type: form.type,
@@ -244,7 +324,9 @@ export default function TrackingAdminPage() {
         status: form.status,
         latest_message: form.latestUpdate,
         movement_status: form.isMoving ? "Moving" : "Stationary",
-        current_location: form.currentLocation,
+        current_location: currentLocationValue.location || form.currentLocation,
+        current_location_latitude: roundCoordinate(currentLocationValue.latitude),
+        current_location_longitude: roundCoordinate(currentLocationValue.longitude),
         expected_delivery_date: form.expectedDelivery,
         reference: form.referenceNo || "-"
       },
@@ -259,11 +341,19 @@ export default function TrackingAdminPage() {
         sender_address: form.senderAddress || "-"
       }],
 
-      movement_locations: route.map(r => ({
-        location: r.location,
-        timestamp: r.date, // Needs ISO if API expects it
-        status: r.status
-      }))
+      movement_locations: route
+        .filter(r => r.location.trim() || r.date || r.status)
+        .map(r => {
+          const timestamp = formatMovementTimestamp(r.date);
+          return {
+            location: r.location,
+            ...(timestamp ? { timestamp } : {}),
+            status: r.status,
+            ...(roundCoordinate(r.latitude) != null ? { latitude: roundCoordinate(r.latitude) } : {}),
+            ...(roundCoordinate(r.longitude) != null ? { longitude: roundCoordinate(r.longitude) } : {})
+          };
+        }),
+      map_movement: mapMovement === "realtime"
     };
 
     const url = editId
@@ -409,8 +499,15 @@ export default function TrackingAdminPage() {
         <h3><MapPin size={20} className={styles.pIcon} /> Movement & Current Location</h3>
         <div className={styles.formGrid}>
           <div className={styles.inputGroup}>
-            <label>Current Location</label>
-            <input name="currentLocation" value={form.currentLocation} onChange={handleChange} placeholder="e.g. Québec, Canada" />
+            <LocationPicker
+              value={currentLocationValue}
+              onChange={(value) => {
+                setCurrentLocationValue(value);
+                setForm(prev => ({ ...prev, currentLocation: value.location }));
+              }}
+              label="Current Location"
+              placeholder="Search location..."
+            />
           </div>
           <div className={styles.inputGroup}>
             <label>Movement Status</label>
@@ -432,16 +529,20 @@ export default function TrackingAdminPage() {
           Add each stop in the shipment&apos;s journey. The last entry is treated as the current location.
         </p>
         {route.map((stop, idx) => (
-          <div key={idx} className={styles.formRow} style={{ alignItems: "flex-end", background: "#f8f9ff", borderRadius: 10, padding: "1rem", marginBottom: "0.8rem" }}>
-            <div style={{ flex: 1 }} className={styles.inputGroup}>
-              <label>Location</label>
-              <input value={stop.location} onChange={e => handleRouteChange(idx, "location", e.target.value)} placeholder="e.g. Istanbul, Turkey" />
+          <div key={idx} className={styles.routeRow}>
+            <div className={`${styles.inputGroup} ${styles.routeFieldGroup}`}>
+              <LocationPicker
+                value={{ location: stop.location, latitude: stop.latitude, longitude: stop.longitude }}
+                onChange={(value) => handleRouteLocationChange(idx, value)}
+                label={`Movement location ${idx + 1}`}
+                placeholder="Search movement location..."
+              />
             </div>
-            <div style={{ flex: 1 }} className={styles.inputGroup}>
+            <div className={`${styles.inputGroup} ${styles.routeFieldGroup}`}>
               <label>Date & Time</label>
               <input type="datetime-local" value={stop.date} onChange={e => handleRouteChange(idx, "date", e.target.value)} />
             </div>
-            <div style={{ flex: 1 }} className={styles.inputGroup}>
+            <div className={`${styles.inputGroup} ${styles.routeFieldGroup}`}>
               <label>Status at this stop</label>
               <select value={stop.status} onChange={e => handleRouteChange(idx, "status", e.target.value)}>
                 <option>Label Created</option>
@@ -454,9 +555,11 @@ export default function TrackingAdminPage() {
               </select>
             </div>
             {route.length > 1 && (
-              <button type="button" className={styles.removeBtn} onClick={() => removeStop(idx)} style={{ marginBottom: "1.5rem" }}>
-                <X size={16} />
-              </button>
+              <div className={styles.routeActionCell}>
+                <button type="button" className={styles.removeBtn} onClick={() => removeStop(idx)}>
+                  <X size={16} />
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -512,12 +615,26 @@ export default function TrackingAdminPage() {
         <h3><Truck size={20} className={styles.pIcon} /> Shipment Details</h3>
         <div className={styles.formGrid3}>
           <div className={styles.inputGroup}>
-            <label>Origin</label>
-            <input name="origin" value={form.origin} onChange={handleChange} placeholder="e.g. Damascus, Syria" />
+            <LocationPicker
+              value={originValue}
+              onChange={(value) => {
+                setOriginValue(value);
+                setForm(prev => ({ ...prev, origin: value.location }));
+              }}
+              label="Origin"
+              placeholder="Search origin location..."
+            />
           </div>
           <div className={styles.inputGroup}>
-            <label>Destination</label>
-            <input name="destination" value={form.destination} onChange={handleChange} placeholder="e.g. United States" />
+            <LocationPicker
+              value={destinationValue}
+              onChange={(value) => {
+                setDestinationValue(value);
+                setForm(prev => ({ ...prev, destination: value.location }));
+              }}
+              label="Destination"
+              placeholder="Search destination location..."
+            />
           </div>
           <div className={styles.inputGroup}>
             <label>Carrier</label>
@@ -576,6 +693,20 @@ export default function TrackingAdminPage() {
           </div>
         </div>
       </div>
+
+      <div className={styles.formSection}>
+        <h3><MapPin size={20} className={styles.pIcon} /> Map Movement Simulation</h3>
+        <p style={{ color: "#8f9bba", fontSize: "0.9rem", marginBottom: "1rem" }}>
+          This setting controls how the map dot behaves for viewers tracking this shipment. It does not go to the backend and is simulated on the frontend based on the timestamps of the current and next locations.
+        </p>
+        <div className={styles.inputGroup} style={{ maxWidth: "400px" }}>
+          <select value={mapMovement} onChange={e => setMapMovement(e.target.value)}>
+            <option value="active">Active Current Location</option>
+            <option value="realtime">Move In Real Time</option>
+          </select>
+        </div>
+      </div>
+
       {saveError && (
         <div style={{
           position: "fixed",

@@ -15,8 +15,14 @@ interface ShipmentData {
   status: string;
   isMoving: boolean;
   currentLocation: string;
+  currentLocationLatitude: number | null;
+  currentLocationLongitude: number | null;
   origin: string;
   destination: string;
+  originLatitude: number | null;
+  originLongitude: number | null;
+  destLatitude: number | null;
+  destLongitude: number | null;
   latestUpdate: string;
   expectedDelivery: string;
   receiver: { name: string; phone: string; email: string; address: string; };
@@ -27,7 +33,7 @@ interface ShipmentData {
     quantity: number; paymentMode: string; totalFreight: string; totalWeight: string;
   };
   goodsImages: string[];
-  timeline: Array<{ status: string; location: string; date: string; done: boolean; active: boolean; }>;
+  timeline: Array<{ status: string; location: string; date: string; done: boolean; active: boolean; latitude: number | null; longitude: number | null; timestamp: number | null }>;
 }
 
 function normalizeGoodsImages(value: unknown): string[] {
@@ -66,7 +72,6 @@ export default function TrackPage() {
   const [error, setError] = useState("");
   const [heroImage, setHeroImage] = useState("/cargo1.jpg");
   const router = useRouter();
-
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get("id");
@@ -114,8 +119,11 @@ export default function TrackPage() {
           status: loc.status,
           location: loc.location,
           date: new Date(loc.timestamp).toLocaleString(),
-          done: idx < currentIdx,
-          active: idx === currentIdx,
+          done: idx < currentIdx || (idx === currentIdx && currentIdx === movementLocations.length - 1),
+          active: idx === currentIdx && currentIdx !== movementLocations.length - 1,
+          latitude: loc.latitude != null ? Number(loc.latitude) : null,
+          longitude: loc.longitude != null ? Number(loc.longitude) : null,
+          timestamp: new Date(loc.timestamp).getTime(),
         }));
 
         const mapped: ShipmentData = {
@@ -123,8 +131,14 @@ export default function TrackPage() {
           status: data.info.status,
           isMoving: data.info.movement_status === "Moving",
           currentLocation: data.info.current_location || "",
+          currentLocationLatitude: data.info.current_location_latitude != null ? Number(data.info.current_location_latitude) : null,
+          currentLocationLongitude: data.info.current_location_longitude != null ? Number(data.info.current_location_longitude) : null,
           origin: data.origin || "",
           destination: data.destination || "",
+          originLatitude: data.origin_latitude != null ? Number(data.origin_latitude) : null,
+          originLongitude: data.origin_longitude != null ? Number(data.origin_longitude) : null,
+          destLatitude: data.destination_latitude != null ? Number(data.destination_latitude) : null,
+          destLongitude: data.destination_longitude != null ? Number(data.destination_longitude) : null,
           latestUpdate: data.info.latest_message || "No updates available.",
           expectedDelivery: data.info.expected_delivery_date || "-",
           receiver: {
@@ -156,6 +170,7 @@ export default function TrackPage() {
           goodsImages: normalizeGoodsImages(data.goods_image),
           timeline,
         };
+        console.log("track/page: Mapped Shipment Data:", mapped);
         setShipment(mapped);
       }
     } catch {
@@ -259,13 +274,46 @@ export default function TrackPage() {
               </div>
             </div>
 
+            {/* Origin / Destination Tickers */}
+            {(shipment.origin || shipment.destination) && (
+              <div className={styles.routeTickers}>
+                {shipment.origin && (
+                  <div className={styles.tickerOrigin}>
+                    <span className={styles.tickerDot} style={{ background: "#34c759" }} />
+                    <div>
+                      <p className={styles.tickerLabel}>Origin</p>
+                      <p className={styles.tickerValue}>{shipment.origin}</p>
+                    </div>
+                  </div>
+                )}
+                {shipment.origin && shipment.destination && (
+                  <div className={styles.tickerArrow}>✈</div>
+                )}
+                {shipment.destination && (
+                  <div className={styles.tickerDest}>
+                    <span className={styles.tickerDot} style={{ background: "#5e5ce6" }} />
+                    <div>
+                      <p className={styles.tickerLabel}>Destination</p>
+                      <p className={styles.tickerValue}>{shipment.destination}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Map Tracker */}
             <div className={styles.infoCard + " " + styles.mapCard}>
               <RealMap
                 origin={shipment.origin}
                 destination={shipment.destination}
-                timeline={shipment.timeline.map(t => ({ location: t.location, status: t.status, active: t.active, done: t.done }))}
                 currentLocation={shipment.currentLocation}
+                originLatitude={shipment.originLatitude}
+                originLongitude={shipment.originLongitude}
+                destLatitude={shipment.destLatitude}
+                destLongitude={shipment.destLongitude}
+                currentLocationLatitude={shipment.currentLocationLatitude}
+                currentLocationLongitude={shipment.currentLocationLongitude}
+                timeline={shipment.timeline}
                 isMoving={shipment.isMoving}
               />
 
