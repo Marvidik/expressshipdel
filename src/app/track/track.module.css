@@ -532,12 +532,127 @@
   display: inline-block;
 }
 
-.goodsImage {
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.imageCount {
+  font-size: 0.85rem;
+  color: #64748b;
+  background: #f5f7ff;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+}
+
+.compactAlbumButton {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.galleryPageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.galleryTitle {
+  font-size: 1.8rem;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.gallerySubtitle {
+  color: #64748b;
+  margin: 0.25rem 0 0;
+}
+
+.backButton {
+  border: none;
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.galleryPageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.galleryMainImageWrap {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.galleryMainImage {
   width: 100%;
-  max-height: 320px;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+  border-radius: 16px;
+}
+
+.galleryControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.modalNavBtn {
+  border: none;
+  background: #f1f5f9;
+  color: #0f172a;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.galleryThumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.thumbnailButton {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.thumbnailButtonActive {
+  border-color: var(--primary);
+}
+
+.thumbnailImage {
+  width: 72px;
+  height: 72px;
   object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid #e8e8e8;
+  display: block;
 }
 
 .infoRow {

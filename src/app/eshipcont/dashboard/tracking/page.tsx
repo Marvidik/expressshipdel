@@ -38,6 +38,21 @@ const EMPTY_FORM = {
   goodsImage: "",
 };
 
+function normalizeGoodsImages(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.trim() !== "");
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 import { Save, Plus, X, Package, MapPin, User, Send, Truck, CheckCircle, Loader2 } from "lucide-react";
 
 import { API_BASE_URL } from "../../../../config";
@@ -77,7 +92,9 @@ export default function TrackingAdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [goodsImageEntries, setGoodsImageEntries] = useState<string[]>([]);
+  const [goodsImageUrlInput, setGoodsImageUrlInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   useEffect(() => {
     if (editId) {
@@ -115,8 +132,9 @@ export default function TrackingAdminPage() {
               paymentMode: data.payment_mode || "Cash",
               totalFreight: data.total_freight || "",
               totalWeight: data.total_weight || "",
-              goodsImage: data.goods_image || "",
+              goodsImage: "",
             });
+            setGoodsImageEntries(normalizeGoodsImages(data.goods_image));
 
             if (data.movement_locations && data.movement_locations.length > 0) {
               setRoute(data.movement_locations.map((loc: any) => {
@@ -143,8 +161,37 @@ export default function TrackingAdminPage() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setSelectedFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setSelectedFiles(prev => {
+      const existing = new Set(prev.map(file => `${file.name}-${file.size}-${file.lastModified}`));
+      const merged = [...prev, ...files.filter(file => !existing.has(`${file.name}-${file.size}-${file.lastModified}`))];
+      return merged;
+    });
+
+    e.target.value = "";
+  };
+
+  const addGoodsImageUrl = () => {
+    const trimmedUrl = goodsImageUrlInput.trim();
+    if (!trimmedUrl) return;
+
+    setGoodsImageEntries(prev => (prev.includes(trimmedUrl) ? prev : [...prev, trimmedUrl]));
+    setGoodsImageUrlInput("");
+  };
+
+  const removeGoodsImageEntry = (url: string) => {
+    setGoodsImageEntries(prev => prev.filter(item => item !== url));
+  };
+
+  const removeSelectedFile = (idx: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const clearAllGoodsImages = () => {
+    setGoodsImageEntries([]);
+    setSelectedFiles([]);
   };
 
   const handleRouteChange = (idx: number, field: keyof RouteStop, value: string) => {
@@ -157,13 +204,16 @@ export default function TrackingAdminPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let finalGoodsImage = form.goodsImage.trim();
+    const parsedGoodsImages = goodsImageEntries.filter(Boolean);
+    const uploadedGoodsImages: string[] = [];
 
-    if (selectedFile) {
+    if (selectedFiles.length > 0) {
       setIsUploading(true);
       try {
-        finalGoodsImage = await uploadToCloudinary(selectedFile);
-        setForm(prev => ({ ...prev, goodsImage: finalGoodsImage }));
+        for (const file of selectedFiles) {
+          const uploadedUrl = await uploadToCloudinary(file);
+          uploadedGoodsImages.push(uploadedUrl);
+        }
       } catch (err: any) {
         setSaveError(err.message || "Image upload failed.");
         setIsUploading(false);
@@ -172,6 +222,8 @@ export default function TrackingAdminPage() {
         setIsUploading(false);
       }
     }
+
+    const finalGoodsImages = [...parsedGoodsImages, ...uploadedGoodsImages].filter(Boolean);
 
     // Construct payload
     const payload: any = {
@@ -187,7 +239,7 @@ export default function TrackingAdminPage() {
       payment_mode: form.paymentMode,
       total_freight: form.totalFreight,
       total_weight: form.totalWeight,
-      ...(finalGoodsImage ? { goods_image: finalGoodsImage } : {}),
+      goods_image: finalGoodsImages,
       info: {
         status: form.status,
         latest_message: form.latestUpdate,
@@ -234,7 +286,9 @@ export default function TrackingAdminPage() {
       });
       if (res.ok) {
         setSaved(true);
-        setSelectedFile(null);
+        setGoodsImageEntries(finalGoodsImages);
+        setSelectedFiles([]);
+        setGoodsImageUrlInput("");
         setTimeout(() => setSaved(false), 3000);
       } else {
         const text = await res.text();
@@ -287,14 +341,49 @@ export default function TrackingAdminPage() {
             <input type="date" name="expectedDelivery" value={form.expectedDelivery} onChange={handleChange} />
           </div>
           <div className={styles.inputGroup}>
-            <label>Goods Image URL (optional)</label>
-            <input name="goodsImage" value={form.goodsImage} onChange={handleChange} placeholder="https://example.com/phones.jpg" />
-          </div>
-          <div className={styles.inputGroup}>
-            <label>Upload Goods Image</label>
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-            {selectedFile && <p style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>Selected: {selectedFile.name}</p>}
-            <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#8f9bba" }}>Images will upload to Cloudinary using the unsigned preset <strong>expressship</strong>.</p>
+            <label>Goods Images</label>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <input
+                value={goodsImageUrlInput}
+                onChange={(e) => setGoodsImageUrlInput(e.target.value)}
+                placeholder="Paste an image URL"
+                style={{ flex: 1, minWidth: "220px" }}
+              />
+              <button type="button" className={styles.addBtn} onClick={addGoodsImageUrl}>
+                <Plus size={16} /> Add URL
+              </button>
+            </div>
+            <input type="file" accept="image/*" multiple onChange={handleFileChange} style={{ marginTop: "0.75rem" }} />
+            {(goodsImageEntries.length > 0 || selectedFiles.length > 0) && (
+              <div style={{ marginTop: "0.75rem" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.5rem" }}>
+                  <button type="button" onClick={clearAllGoodsImages} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0, fontSize: "0.85rem" }}>
+                    Clear all images
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                  {goodsImageEntries.map((image, idx) => (
+                    <div key={`${image}-${idx}`} style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.4rem 0.6rem", background: "#f8f9ff", borderRadius: "999px", border: "1px solid #e2e8f0" }}>
+                      <span style={{ fontSize: "0.85rem", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{image}</span>
+                      <button type="button" onClick={() => removeGoodsImageEntry(image)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }} aria-label="Remove image">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {selectedFiles.map((file, idx) => (
+                    <div key={`${file.name}-${idx}`} style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.4rem 0.6rem", background: "#f8f9ff", borderRadius: "999px", border: "1px solid #e2e8f0" }}>
+                      <span style={{ fontSize: "0.85rem", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</span>
+                      <button type="button" onClick={() => removeSelectedFile(idx)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }} aria-label="Remove selected file">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#8f9bba" }}>
+              Add as many images as you need, then remove any item before saving if you change your mind.
+            </p>
           </div>
           <div className={styles.inputGroup}>
             <label>Overall Status</label>

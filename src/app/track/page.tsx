@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import SiteFooter from "../components/SiteFooter";
 import Navbar from "../components/Navbar";
 import { API_BASE_URL } from "../../config";
+import { useRouter } from "next/navigation";
 
 const RealMap = dynamic(() => import("../components/RealMap"), { ssr: false });
 
@@ -25,8 +26,23 @@ interface ShipmentData {
     type: string; mode: string; referenceNo: string; product: string;
     quantity: number; paymentMode: string; totalFreight: string; totalWeight: string;
   };
-  goodsImage?: string;
+  goodsImages: string[];
   timeline: Array<{ status: string; location: string; date: string; done: boolean; active: boolean; }>;
+}
+
+function normalizeGoodsImages(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.trim() !== "");
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
 }
 
 function Barcode({ value }: { value: string }) {
@@ -49,6 +65,7 @@ export default function TrackPage() {
   const [shipment, setShipment] = useState<ShipmentData | null>(null);
   const [error, setError] = useState("");
   const [heroImage, setHeroImage] = useState("/cargo1.jpg");
+  const router = useRouter();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -136,7 +153,7 @@ export default function TrackPage() {
             totalFreight: data.total_freight || "-",
             totalWeight: data.total_weight || "-",
           },
-          goodsImage: data.goods_image || "",
+          goodsImages: normalizeGoodsImages(data.goods_image),
           timeline,
         };
         setShipment(mapped);
@@ -161,6 +178,11 @@ export default function TrackPage() {
   const progressPercent = shipment
     ? ((activeIndex < 0 ? shipment.timeline.length - 1 : activeIndex) / Math.max(shipment.timeline.length - 1, 1)) * 100
     : 0;
+
+  const openGallery = () => {
+    if (!shipment?.trackingId) return;
+    router.push(`/track/gallery?id=${encodeURIComponent(shipment.trackingId)}`);
+  };
 
   return (
     <div className={styles.container}>
@@ -275,10 +297,15 @@ export default function TrackPage() {
               </div>
             </div>
 
-            {shipment.goodsImage && (
+            {shipment.goodsImages.length > 0 && (
               <div className={styles.infoCard}>
-                <h3 className={styles.cardTitle}>Goods Image</h3>
-                <img src={shipment.goodsImage} alt="Shipment goods" className={styles.goodsImage} />
+                <div className={styles.cardHeaderRow}>
+                  <h3 className={styles.cardTitle}>Goods Images</h3>
+                  {shipment.goodsImages.length > 1 && <span className={styles.imageCount}>{shipment.goodsImages.length} photos</span>}
+                </div>
+                <button type="button" className={styles.compactAlbumButton} onClick={openGallery}>
+                  Open image album
+                </button>
               </div>
             )}
 
